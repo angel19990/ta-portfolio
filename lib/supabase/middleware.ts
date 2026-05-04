@@ -77,7 +77,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
       }
 
-      if (pathname.startsWith("/login")) {
+      if (pathname === "/" || pathname.startsWith("/login")) {
         const url = request.nextUrl.clone();
         url.pathname = ROLE_HOME[role];
         return NextResponse.redirect(url);

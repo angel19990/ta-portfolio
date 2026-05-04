@@ -46,10 +46,14 @@ export default function HomePage() {
           that supports them.
         </p>
         <div className="mt-8 flex gap-3">
-          <Button render={<Link href="/login/student" />}>
+          <Button nativeButton={false} render={<Link href="/login/student" />}>
             Student sign in
           </Button>
-          <Button variant="outline" render={<Link href="/login/industry" />}>
+          <Button
+            nativeButton={false}
+            variant="outline"
+            render={<Link href="/login/industry" />}
+          >
             Industry sign in
           </Button>
         </div>
