@@ -2,6 +2,7 @@ import "server-only"
 
 import { createClient } from "@/lib/supabase/server"
 import type { EnrollmentRow } from "@/lib/db/student-classes"
+import type { StudentNote } from "@/lib/db/student-notes"
 
 export type StudentStatus =
   | "inactive"
@@ -28,6 +29,7 @@ export type AdminStudent = {
   created_at: string
   actor_profile: AdminStudentActor | null
   enrollments: EnrollmentRow[]
+  notes: StudentNote[]
   status: StudentStatus
 }
 
@@ -83,6 +85,25 @@ function mapEnrollment(raw: RawEnrollment): EnrollmentRow {
   }
 }
 
+type RawNote = {
+  id: string
+  body: string
+  created_at: string
+  author: { id: string; full_name: string | null } | unknown
+}
+
+function mapNote(raw: RawNote): StudentNote {
+  const author = singleEmbed<{ id: string; full_name: string | null }>(
+    raw.author,
+  )
+  return {
+    id: raw.id,
+    body: raw.body,
+    created_at: raw.created_at,
+    author,
+  }
+}
+
 export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -117,6 +138,12 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
             term,
             classes ( name, code )
           )
+        ),
+        student_notes!profile_id (
+          id,
+          body,
+          created_at,
+          author:author_id ( id, full_name )
         )
       `,
     )
@@ -134,6 +161,12 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
       .student_classes
     const enrollments: EnrollmentRow[] = Array.isArray(rawEnrollments)
       ? rawEnrollments.map((e) => mapEnrollment(e as RawEnrollment))
+      : []
+    const rawNotes = (row as { student_notes: unknown }).student_notes
+    const notes: StudentNote[] = Array.isArray(rawNotes)
+      ? rawNotes
+          .map((n) => mapNote(n as RawNote))
+          .sort((a, b) => b.created_at.localeCompare(a.created_at))
       : []
 
     let status: StudentStatus
@@ -155,6 +188,7 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
       created_at: row.created_at,
       actor_profile: actorProfile,
       enrollments,
+      notes,
       status,
     }
   })

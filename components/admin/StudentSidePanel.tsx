@@ -13,9 +13,12 @@ import {
 } from "@/components/ui/sheet"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
 import { approveActor } from "@/app/(app)/admin/approvals/actions"
+import { addStudentNote } from "@/app/(app)/admin/students/actions"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
 import type { AvailableSection, EnrollmentRow } from "@/lib/db/student-classes"
+import type { StudentNote } from "@/lib/db/student-notes"
 import { AddClassToStudentDialog } from "@/components/admin/AddClassToStudentDialog"
 import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog"
 import { teacherFromSectionCode } from "@/lib/teachers"
@@ -183,7 +186,7 @@ export function StudentSidePanel({
           </Section>
 
           <Section title="Notes">
-            <Empty>Notes thread lands in Phase 3 Task 4.</Empty>
+            <NotesThread profileId={student.id} notes={student.notes} />
           </Section>
         </div>
       </SheetContent>
@@ -265,6 +268,89 @@ function EnrollmentItem({
       ) : null}
     </li>
   )
+}
+
+function NotesThread({
+  profileId,
+  notes,
+}: {
+  profileId: string
+  notes: StudentNote[]
+}) {
+  const router = useRouter()
+  const [body, setBody] = useState("")
+  const [isPending, startTransition] = useTransition()
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    const trimmed = body.trim()
+    if (!trimmed) return
+    startTransition(async () => {
+      const result = await addStudentNote(profileId, trimmed)
+      if ("error" in result) {
+        toast.error(result.error)
+        return
+      }
+      toast.success("Note added")
+      setBody("")
+      router.refresh()
+    })
+  }
+
+  return (
+    <div className="space-y-3">
+      {notes.length === 0 ? (
+        <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+          No notes yet.
+        </p>
+      ) : (
+        <ul className="space-y-2">
+          {notes.map((n) => (
+            <li key={n.id} className="rounded-md border p-3">
+              <p className="whitespace-pre-wrap break-words text-sm">
+                {n.body}
+              </p>
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {n.author?.full_name ?? "Unknown"} · {formatTimestamp(n.created_at)}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form onSubmit={onSubmit} className="space-y-2">
+        <Textarea
+          placeholder="Add a note…"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={3}
+          disabled={isPending}
+        />
+        <div className="flex justify-end">
+          <Button
+            type="submit"
+            size="sm"
+            disabled={isPending || body.trim().length === 0}
+          >
+            {isPending ? "Adding…" : "Add note"}
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function formatTimestamp(iso: string): string {
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    })
+  } catch {
+    return iso
+  }
 }
 
 function formatCents(cents: number): string {

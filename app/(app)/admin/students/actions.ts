@@ -8,6 +8,9 @@ import type { PaymentStatus } from "@/lib/db/student-classes"
 
 export type EnrollResult = { ok: true } | { error: string }
 export type PaymentResult = { ok: true } | { error: string }
+export type NoteResult = { ok: true } | { error: string }
+
+const NOTE_MAX_LENGTH = 5000
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -100,6 +103,33 @@ export async function recordPayment(
       payment_status: newStatus,
     })
     .eq("id", enrollmentId)
+  if (error) return { error: error.message }
+
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+export async function addStudentNote(
+  profileId: string,
+  body: string,
+): Promise<NoteResult> {
+  if (!profileId) return { error: "Missing student id" }
+  const trimmed = body.trim()
+  if (trimmed.length === 0) return { error: "Note can’t be empty" }
+  if (trimmed.length > NOTE_MAX_LENGTH) {
+    return { error: `Note can’t exceed ${NOTE_MAX_LENGTH} characters` }
+  }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "admin") return { error: "Forbidden" }
+
+  const supabase = await createClient()
+  const { error } = await supabase.from("student_notes").insert({
+    profile_id: profileId,
+    author_id: me.id,
+    body: trimmed,
+  })
   if (error) return { error: error.message }
 
   revalidatePath("/admin")
