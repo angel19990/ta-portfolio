@@ -17,6 +17,7 @@ import { approveActor } from "@/app/(app)/admin/approvals/actions"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
 import type { AvailableSection, EnrollmentRow } from "@/lib/db/student-classes"
 import { AddClassToStudentDialog } from "@/components/admin/AddClassToStudentDialog"
+import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog"
 import { teacherFromSectionCode } from "@/lib/teachers"
 
 const STATUS_LABEL: Record<StudentStatus, string> = {
@@ -52,6 +53,9 @@ export function StudentSidePanel({
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [addClassOpen, setAddClassOpen] = useState(false)
+  const [paymentEnrollmentId, setPaymentEnrollmentId] = useState<string | null>(
+    null,
+  )
 
   if (!student) {
     return (
@@ -164,7 +168,11 @@ export function StudentSidePanel({
             ) : (
               <ul className="space-y-2">
                 {student.enrollments.map((e) => (
-                  <EnrollmentItem key={e.id} enrollment={e} />
+                  <EnrollmentItem
+                    key={e.id}
+                    enrollment={e}
+                    onRecordPayment={() => setPaymentEnrollmentId(e.id)}
+                  />
                 ))}
               </ul>
             )}
@@ -187,14 +195,39 @@ export function StudentSidePanel({
         open={addClassOpen}
         onOpenChange={setAddClassOpen}
       />
+      {(() => {
+        const active = student.enrollments.find(
+          (e) => e.id === paymentEnrollmentId,
+        )
+        const className = active?.section?.class?.name ?? "Class"
+        return (
+          <RecordPaymentDialog
+            enrollmentId={paymentEnrollmentId}
+            className={className}
+            outstandingCents={active?.outstanding_cents ?? 0}
+            amountPaidCents={active?.amount_paid_cents ?? 0}
+            open={paymentEnrollmentId !== null}
+            onOpenChange={(open) => {
+              if (!open) setPaymentEnrollmentId(null)
+            }}
+          />
+        )
+      })()}
     </Sheet>
   )
 }
 
-function EnrollmentItem({ enrollment }: { enrollment: EnrollmentRow }) {
+function EnrollmentItem({
+  enrollment,
+  onRecordPayment,
+}: {
+  enrollment: EnrollmentRow
+  onRecordPayment: () => void
+}) {
   const section = enrollment.section
   const className = section?.class?.name ?? "Unknown class"
   const teacher = section ? teacherFromSectionCode(section.section_code) : null
+  const isPaid = enrollment.outstanding_cents <= 0
   return (
     <li className="rounded-md border p-3">
       <div className="flex items-start justify-between gap-2">
@@ -210,14 +243,26 @@ function EnrollmentItem({ enrollment }: { enrollment: EnrollmentRow }) {
           {enrollment.status}
         </Badge>
       </div>
-      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>Payment: {enrollment.payment_status}</span>
         <span>
-          {enrollment.outstanding_cents > 0
-            ? `Owes ${formatCents(enrollment.outstanding_cents)}`
-            : "Paid in full"}
+          {isPaid
+            ? "Paid in full"
+            : `Owes ${formatCents(enrollment.outstanding_cents)}`}
         </span>
       </div>
+      {!isPaid ? (
+        <div className="mt-2 flex justify-end">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={onRecordPayment}
+          >
+            Record payment
+          </Button>
+        </div>
+      ) : null}
     </li>
   )
 }

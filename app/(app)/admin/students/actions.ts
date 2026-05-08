@@ -4,8 +4,10 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/get-user"
+import type { PaymentStatus } from "@/lib/db/student-classes"
 
 export type EnrollResult = { ok: true } | { error: string }
+export type PaymentResult = { ok: true } | { error: string }
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -53,6 +55,52 @@ export async function enrollStudentInSection(
     }
     return { error: error.message }
   }
+
+  revalidatePath("/admin")
+  return { ok: true }
+}
+
+export async function recordPayment(
+  enrollmentId: string,
+  amountCents: number,
+): Promise<PaymentResult> {
+  if (!enrollmentId) return { error: "Missing id" }
+  if (!Number.isInteger(amountCents) || amountCents <= 0) {
+    return { error: "Amount must be a positive whole number of cents" }
+  }
+  // Sanity cap: $100k. Catches typos like extra zeros.
+  if (amountCents > 10_000_000) {
+    return { error: "Amount looks too large — double-check the value" }
+  }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "admin") return { error: "Forbidden" }
+
+  const supabase = await createClient()
+
+  const { data: row, error: readError } = await supabase
+    .from("student_classes")
+    .select("amount_paid_cents, outstanding_cents")
+    .eq("id", enrollmentId)
+    .single()
+  if (readError) return { error: readError.message }
+  if (!row) return { error: "Enrollment not found" }
+
+  const newPaid = row.amount_paid_cents + amountCents
+  const newOutstanding = Math.max(0, row.outstanding_cents - amountCents)
+  const newStatus: PaymentStatus =
+    newOutstanding === 0 ? "paid" : newPaid > 0 ? "partial" : "unpaid"
+
+  const { error } = await supabase
+    .from("student_classes")
+    .update({
+      amount_paid_cents: newPaid,
+      outstanding_cents: newOutstanding,
+      payment_status: newStatus,
+    })
+    .eq("id", enrollmentId)
+  if (error) return { error: error.message }
 
   revalidatePath("/admin")
   return { ok: true }
