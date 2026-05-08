@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -15,6 +15,9 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { approveActor } from "@/app/(app)/admin/approvals/actions"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
+import type { AvailableSection, EnrollmentRow } from "@/lib/db/student-classes"
+import { AddClassToStudentDialog } from "@/components/admin/AddClassToStudentDialog"
+import { teacherFromSectionCode } from "@/lib/teachers"
 
 const STATUS_LABEL: Record<StudentStatus, string> = {
   inactive: "Inactive",
@@ -35,13 +38,20 @@ const STATUS_VARIANT: Record<
 
 type Props = {
   student: AdminStudent | null
+  sections: AvailableSection[]
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function StudentSidePanel({ student, open, onOpenChange }: Props) {
+export function StudentSidePanel({
+  student,
+  sections,
+  open,
+  onOpenChange,
+}: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [addClassOpen, setAddClassOpen] = useState(false)
 
   if (!student) {
     return (
@@ -53,6 +63,9 @@ export function StudentSidePanel({ student, open, onOpenChange }: Props) {
 
   const actor = student.actor_profile
   const displayName = student.full_name ?? "Unnamed"
+  const enrolledSectionIds = student.enrollments
+    .map((e) => e.section?.id)
+    .filter((v): v is string => typeof v === "string")
 
   function onApprove() {
     if (!actor) return
@@ -133,8 +146,28 @@ export function StudentSidePanel({ student, open, onOpenChange }: Props) {
             </Section>
           ) : null}
 
-          <Section title="Classes">
-            <Empty>Add-class flow lands in Phase 3 Task 2.</Empty>
+          <Section
+            title="Classes"
+            action={
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setAddClassOpen(true)}
+              >
+                Add class
+              </Button>
+            }
+          >
+            {student.enrollments.length === 0 ? (
+              <Empty>Not enrolled in any classes yet.</Empty>
+            ) : (
+              <ul className="space-y-2">
+                {student.enrollments.map((e) => (
+                  <EnrollmentItem key={e.id} enrollment={e} />
+                ))}
+              </ul>
+            )}
           </Section>
 
           <Section title="Dues">
@@ -146,22 +179,75 @@ export function StudentSidePanel({ student, open, onOpenChange }: Props) {
           </Section>
         </div>
       </SheetContent>
+      <AddClassToStudentDialog
+        profileId={student.id}
+        studentName={displayName}
+        sections={sections}
+        excludeSectionIds={enrolledSectionIds}
+        open={addClassOpen}
+        onOpenChange={setAddClassOpen}
+      />
     </Sheet>
   )
 }
 
+function EnrollmentItem({ enrollment }: { enrollment: EnrollmentRow }) {
+  const section = enrollment.section
+  const className = section?.class?.name ?? "Unknown class"
+  const teacher = section ? teacherFromSectionCode(section.section_code) : null
+  return (
+    <li className="rounded-md border p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{className}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {section?.section_code ?? "—"}
+            {section?.term ? ` · ${section.term}` : ""}
+            {teacher ? ` · ${teacher}` : ""}
+          </p>
+        </div>
+        <Badge variant={enrollment.status === "enrolled" ? "secondary" : "outline"}>
+          {enrollment.status}
+        </Badge>
+      </div>
+      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+        <span>Payment: {enrollment.payment_status}</span>
+        <span>
+          {enrollment.outstanding_cents > 0
+            ? `Owes ${formatCents(enrollment.outstanding_cents)}`
+            : "Paid in full"}
+        </span>
+      </div>
+    </li>
+  )
+}
+
+function formatCents(cents: number): string {
+  return (cents / 100).toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+}
+
 function Section({
   title,
+  action,
   children,
 }: {
   title: string
+  action?: React.ReactNode
   children: React.ReactNode
 }) {
   return (
     <section>
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {title}
-      </h3>
+      <div className="mb-2 flex items-center justify-between">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {title}
+        </h3>
+        {action}
+      </div>
       {children}
     </section>
   )

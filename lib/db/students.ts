@@ -1,6 +1,7 @@
 import "server-only"
 
 import { createClient } from "@/lib/supabase/server"
+import type { EnrollmentRow } from "@/lib/db/student-classes"
 
 export type StudentStatus =
   | "inactive"
@@ -26,7 +27,60 @@ export type AdminStudent = {
   is_active: boolean
   created_at: string
   actor_profile: AdminStudentActor | null
+  enrollments: EnrollmentRow[]
   status: StudentStatus
+}
+
+// 1:1 embed normalizer: PostgREST may return either an object or a 1-element array.
+function singleEmbed<T>(raw: unknown): T | null {
+  if (raw == null) return null
+  if (Array.isArray(raw)) return (raw[0] ?? null) as T | null
+  return raw as T
+}
+
+type RawEnrollment = {
+  id: string
+  status: EnrollmentRow["status"]
+  payment_status: EnrollmentRow["payment_status"]
+  amount_paid_cents: number
+  outstanding_cents: number
+  enrolled_at: string
+  class_sections:
+    | {
+        id: string
+        section_code: string
+        term: string
+        classes: { name: string; code: string | null } | null | unknown
+      }
+    | unknown
+}
+
+function mapEnrollment(raw: RawEnrollment): EnrollmentRow {
+  const section = singleEmbed<{
+    id: string
+    section_code: string
+    term: string
+    classes: unknown
+  }>(raw.class_sections)
+  const cls = section
+    ? singleEmbed<{ name: string; code: string | null }>(section.classes)
+    : null
+  return {
+    id: raw.id,
+    status: raw.status,
+    payment_status: raw.payment_status,
+    amount_paid_cents: raw.amount_paid_cents,
+    outstanding_cents: raw.outstanding_cents,
+    enrolled_at: raw.enrolled_at,
+    section: section
+      ? {
+          id: section.id,
+          section_code: section.section_code,
+          term: section.term,
+          class: cls,
+        }
+      : null,
+  }
 }
 
 export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
@@ -49,6 +103,20 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
           location,
           skills,
           age
+        ),
+        student_classes (
+          id,
+          status,
+          payment_status,
+          amount_paid_cents,
+          outstanding_cents,
+          enrolled_at,
+          class_sections (
+            id,
+            section_code,
+            term,
+            classes ( name, code )
+          )
         )
       `,
     )
@@ -59,14 +127,14 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
   if (!data) return []
 
   return data.map((row) => {
-    // 1:1 embed: PostgREST may return either an object or a single-element array
-    // depending on how it detects the relationship. Normalize to one or none.
-    const raw = (row as { actor_profiles: unknown }).actor_profiles
-    const actor = (Array.isArray(raw) ? raw[0] : raw) as
-      | AdminStudentActor
-      | null
-      | undefined
-    const actorProfile = actor ?? null
+    const actorProfile = singleEmbed<AdminStudentActor>(
+      (row as { actor_profiles: unknown }).actor_profiles,
+    )
+    const rawEnrollments = (row as { student_classes: unknown })
+      .student_classes
+    const enrollments: EnrollmentRow[] = Array.isArray(rawEnrollments)
+      ? rawEnrollments.map((e) => mapEnrollment(e as RawEnrollment))
+      : []
 
     let status: StudentStatus
     if (!row.is_active) status = "inactive"
@@ -86,6 +154,7 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
       is_active: row.is_active,
       created_at: row.created_at,
       actor_profile: actorProfile,
+      enrollments,
       status,
     }
   })

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
+import type { AvailableSection } from "@/lib/db/student-classes"
 import { StudentSidePanel } from "@/components/admin/StudentSidePanel"
 
 const STATUS_LABEL: Record<StudentStatus, string> = {
@@ -46,9 +47,10 @@ const FILTERS: { value: StatusFilter; label: string }[] = [
 
 type Props = {
   students: AdminStudent[]
+  sections: AvailableSection[]
 }
 
-export function StudentTable({ students }: Props) {
+export function StudentTable({ students, sections }: Props) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<StatusFilter>("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -181,6 +183,7 @@ export function StudentTable({ students }: Props) {
 
       <StudentSidePanel
         student={selected}
+        sections={sections}
         open={selected !== null}
         onOpenChange={(open) => {
           if (!open) setSelectedId(null)

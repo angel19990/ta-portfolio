@@ -3,10 +3,14 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentTable } from "@/components/admin/StudentTable";
 import { listStudentsForAdmin } from "@/lib/db/students";
+import { listAvailableSections } from "@/lib/db/student-classes";
 
 export default async function AdminDashboardPage() {
   await requireRole("admin");
-  const students = await listStudentsForAdmin();
+  const [students, sections] = await Promise.all([
+    listStudentsForAdmin(),
+    listAvailableSections(),
+  ]);
 
   return (
     <>
@@ -17,7 +21,7 @@ export default async function AdminDashboardPage() {
           <TabsTrigger value="classes">Classes</TabsTrigger>
         </TabsList>
         <TabsContent value="students" className="mt-6">
-          <StudentTable students={students} />
+          <StudentTable students={students} sections={sections} />
         </TabsContent>
         <TabsContent value="classes" className="mt-6">
           <div className="rounded-lg border p-6 text-sm text-muted-foreground">
