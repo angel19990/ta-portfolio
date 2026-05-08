@@ -41,6 +41,80 @@ export async function getMyApplicationForCall(callId: string): Promise<{
   return { id: data.id, status: data.status as ApplicationStatus }
 }
 
+export type ApplicantRow = {
+  application_id: string
+  status: ApplicationStatus
+  applied_at: string
+  actor_profile_id: string
+  full_name: string | null
+  headshot_url: string | null
+  approved: boolean
+  location: string | null
+}
+
+// Industry-side. Relies on RLS: call owner sees applications via
+// `casting_applications_select_call_owner`, plus migration 0007's
+// `actor_profiles_select_call_owner` for the embedded actor profile.
+export async function listApplicantsForCall(
+  callId: string,
+): Promise<ApplicantRow[]> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from("casting_applications")
+    .select(
+      `
+        id,
+        status,
+        created_at,
+        actor_profiles (
+          id,
+          headshot_url,
+          location,
+          visibility,
+          approved_at,
+          profiles ( full_name )
+        )
+      `,
+    )
+    .eq("casting_call_id", callId)
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  if (!data) return []
+
+  return data.map((raw) => {
+    const apRaw = (raw as { actor_profiles: unknown }).actor_profiles
+    const ap = (() => {
+      if (!apRaw) return null
+      if (Array.isArray(apRaw))
+        return (apRaw[0] ?? null) as Record<string, unknown> | null
+      return apRaw as Record<string, unknown>
+    })()
+    const profileRaw = ap?.profiles
+    const profile = (() => {
+      if (!profileRaw) return null
+      if (Array.isArray(profileRaw))
+        return (profileRaw[0] ?? null) as { full_name: string | null } | null
+      return profileRaw as { full_name: string | null }
+    })()
+
+    const approved =
+      ap?.visibility === "public" && (ap as { approved_at: string | null })?.approved_at !== null
+
+    return {
+      application_id: raw.id as string,
+      status: raw.status as ApplicationStatus,
+      applied_at: raw.created_at as string,
+      actor_profile_id: (ap?.id as string) ?? "",
+      full_name: profile?.full_name ?? null,
+      headshot_url: (ap?.headshot_url as string | null) ?? null,
+      approved,
+      location: (ap?.location as string | null) ?? null,
+    }
+  })
+}
+
 export async function listMyApplicationsWithCalls(): Promise<
   MyApplicationRow[]
 > {

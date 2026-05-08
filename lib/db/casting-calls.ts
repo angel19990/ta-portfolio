@@ -78,10 +78,67 @@ export async function listOpenCastingCalls(): Promise<CastingCallRow[]> {
   return (data ?? []) as CastingCallRow[]
 }
 
-// Student-side detail. Restricts to open calls, but the applicant overlay
-// (0005) means a student who applied to a call that later closed can still
-// fetch it via getCastingCallByIdAsApplicant below — used by the
-// applications page, not the browse detail.
+export type AdminCastingCallRow = CastingCallRow & {
+  owner_full_name: string | null
+  applicant_count: number
+}
+
+// Admin moderation. Admin sees all calls via `casting_calls_select_admin`.
+export async function listAllCastingCallsForAdmin(): Promise<
+  AdminCastingCallRow[]
+> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("casting_calls")
+    .select(
+      `
+        id, title, production_company, project_type, union_status,
+        pay_status, shoot_start, shoot_end, deadline, location,
+        description, status, created_at,
+        owner:created_by ( full_name ),
+        casting_applications ( count )
+      `,
+    )
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  if (!data) return []
+
+  return data.map((raw) => {
+    const ownerRaw = (raw as { owner: unknown }).owner
+    const owner = (() => {
+      if (!ownerRaw) return null
+      if (Array.isArray(ownerRaw))
+        return (ownerRaw[0] ?? null) as { full_name: string | null } | null
+      return ownerRaw as { full_name: string | null }
+    })()
+    const countRaw = (raw as { casting_applications: unknown })
+      .casting_applications
+    const count = (() => {
+      if (!countRaw) return 0
+      if (Array.isArray(countRaw)) {
+        const first = countRaw[0] as { count: number } | undefined
+        return first?.count ?? 0
+      }
+      return ((countRaw as { count: number }).count ?? 0) as number
+    })()
+
+    const { owner: _o, casting_applications: _c, ...rest } = raw as Record<
+      string,
+      unknown
+    > & {
+      owner: unknown
+      casting_applications: unknown
+    }
+    return {
+      ...(rest as unknown as CastingCallRow),
+      owner_full_name: owner?.full_name ?? null,
+      applicant_count: count,
+    }
+  })
+}
+
+// Student-side detail. Restricts to open calls.
 export async function getOpenCastingCallById(
   id: string,
 ): Promise<CastingCallRow | null> {

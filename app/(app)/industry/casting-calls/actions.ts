@@ -13,6 +13,14 @@ import {
 export type CreateResult = { ok: true; id: string } | { error: string }
 export type UpdateResult = { ok: true; id: string } | { error: string }
 export type StatusResult = { ok: true } | { error: string }
+export type ApplicationStatusResult = { ok: true } | { error: string }
+
+const VALID_APPLICATION_STATUSES = [
+  "submitted",
+  "shortlisted",
+  "rejected",
+] as const
+type IndustryAssignableStatus = (typeof VALID_APPLICATION_STATUSES)[number]
 
 const VALID_STATUSES: CastingCallStatus[] = [
   "draft",
@@ -117,6 +125,53 @@ export async function updateCastingCall(
   revalidatePath(`/industry/casting-calls/${id}`)
   revalidatePath(`/industry/casting-calls/${id}/edit`)
   return { ok: true, id }
+}
+
+export async function setApplicationStatus(
+  applicationId: string,
+  newStatus: IndustryAssignableStatus,
+  callId: string,
+): Promise<ApplicationStatusResult> {
+  if (!applicationId) return { error: "Missing application id" }
+  if (!callId) return { error: "Missing call id" }
+  if (
+    !(VALID_APPLICATION_STATUSES as readonly string[]).includes(newStatus)
+  ) {
+    return { error: "Invalid status" }
+  }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "industry_user" && me.role !== "admin") {
+    return { error: "Forbidden" }
+  }
+
+  const supabase = await createClient()
+
+  // Block transitions out of 'withdrawn' (student-driven terminal state).
+  // RLS doesn't gate by current status, so enforce here.
+  const { data: existing, error: readError } = await supabase
+    .from("casting_applications")
+    .select("status")
+    .eq("id", applicationId)
+    .maybeSingle()
+  if (readError) return { error: readError.message }
+  if (!existing) return { error: "Application not found" }
+  if (existing.status === "withdrawn") {
+    return { error: "Withdrawn applications can't be reassigned." }
+  }
+
+  // RLS `casting_applications_update_call_owner` enforces ownership
+  // server-side.
+  const { error } = await supabase
+    .from("casting_applications")
+    .update({ status: newStatus })
+    .eq("id", applicationId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/industry/casting-calls/${callId}`)
+  return { ok: true }
 }
 
 export async function setCastingCallStatus(

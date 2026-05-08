@@ -3,10 +3,12 @@ import { notFound } from "next/navigation"
 
 import { requireRole } from "@/lib/auth/require-role"
 import { getOwnCastingCallById } from "@/lib/db/casting-calls"
+import { listApplicantsForCall } from "@/lib/db/casting-applications"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { Button } from "@/components/ui/button"
 import { CastingCallSummary } from "@/components/shared/CastingCallSummary"
 import { CastingCallStatusActions } from "@/components/industry/CastingCallStatusActions"
+import { ApplicantsTable } from "@/components/industry/ApplicantsTable"
 
 type Params = Promise<{ id: string }>
 
@@ -19,6 +21,8 @@ export default async function CastingCallDetailPage({
   const { id } = await params
   const call = await getOwnCastingCallById(id)
   if (!call) notFound()
+
+  const applicants = await listApplicantsForCall(id)
 
   return (
     <>
@@ -51,11 +55,14 @@ export default async function CastingCallDetailPage({
       <div className="grid max-w-2xl gap-6">
         <CastingCallSummary call={call} />
 
-        <section className="rounded-lg border p-6">
-          <h2 className="text-sm font-medium">Applicants</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Applicants table lands in Phase 4 Task 4.
-          </p>
+        <section className="space-y-3 rounded-lg border p-6">
+          <h2 className="text-sm font-medium">
+            Applicants{" "}
+            <span className="ml-1 text-xs text-muted-foreground">
+              ({applicants.length})
+            </span>
+          </h2>
+          <ApplicantsTable applicants={applicants} callId={call.id} />
         </section>
 
         <div>
