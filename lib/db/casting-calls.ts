@@ -61,3 +61,38 @@ export async function getOwnCastingCallById(
   if (error) throw error
   return (data as CastingCallRow | null) ?? null
 }
+
+// Student-side: all currently-open calls. RLS `casting_calls_select_open`
+// already restricts to status='open' (plus owner/admin/applicant overlays
+// that don't match this caller).
+export async function listOpenCastingCalls(): Promise<CastingCallRow[]> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("casting_calls")
+    .select(CALL_COLUMNS)
+    .eq("status", "open")
+    .order("deadline", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  return (data ?? []) as CastingCallRow[]
+}
+
+// Student-side detail. Restricts to open calls, but the applicant overlay
+// (0005) means a student who applied to a call that later closed can still
+// fetch it via getCastingCallByIdAsApplicant below — used by the
+// applications page, not the browse detail.
+export async function getOpenCastingCallById(
+  id: string,
+): Promise<CastingCallRow | null> {
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from("casting_calls")
+    .select(CALL_COLUMNS)
+    .eq("id", id)
+    .eq("status", "open")
+    .maybeSingle()
+
+  if (error) throw error
+  return (data as CastingCallRow | null) ?? null
+}
