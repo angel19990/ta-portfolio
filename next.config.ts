@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  experimental: {
+    serverActions: {
+      // Default is 1MB. Our largest accepted upload is 10 MB (resume PDF);
+      // headshot/photo cap is 5 MB. 12 MB gives headroom for FormData overhead.
+      bodySizeLimit: "12mb",
+    },
+  },
 };
 
 export default nextConfig;

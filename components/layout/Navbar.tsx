@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -93,17 +94,20 @@ export async function Navbar() {
               </Avatar>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel className="flex flex-col">
-                <span className="text-sm font-medium">
-                  {user.fullName ?? "Account"}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {ROLE_LABEL[user.role]} · {user.email}
-                </span>
-              </DropdownMenuLabel>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel className="flex flex-col">
+                  <span className="text-sm font-medium">
+                    {user.fullName ?? "Account"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {ROLE_LABEL[user.role]} · {user.email}
+                  </span>
+                </DropdownMenuLabel>
+              </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <form action={signOut}>
                 <DropdownMenuItem
+                  nativeButton
                   render={<button type="submit" className="w-full" />}
                 >
                   Sign out
