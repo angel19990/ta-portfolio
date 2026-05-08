@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
 import type { AvailableSection } from "@/lib/db/student-classes"
 import { StudentSidePanel } from "@/components/admin/StudentSidePanel"
+import { InviteUserDialog } from "@/components/admin/InviteUserDialog"
 
 const STATUS_LABEL: Record<StudentStatus, string> = {
   inactive: "Inactive",
@@ -54,6 +55,7 @@ export function StudentTable({ students, sections }: Props) {
   const [query, setQuery] = useState("")
   const [filter, setFilter] = useState<StatusFilter>("all")
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [inviteOpen, setInviteOpen] = useState(false)
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -86,13 +88,22 @@ export function StudentTable({ students, sections }: Props) {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Input
-          type="search"
-          placeholder="Search name or email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="sm:max-w-xs"
-        />
+        <div className="flex flex-1 items-center gap-2">
+          <Input
+            type="search"
+            placeholder="Search name or email…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="sm:max-w-xs"
+          />
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => setInviteOpen(true)}
+          >
+            + Invite
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {FILTERS.map((f) => (
             <Button
@@ -189,6 +200,7 @@ export function StudentTable({ students, sections }: Props) {
           if (!open) setSelectedId(null)
         }}
       />
+      <InviteUserDialog open={inviteOpen} onOpenChange={setInviteOpen} />
     </div>
   )
 }

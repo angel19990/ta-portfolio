@@ -3,14 +3,22 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
 import type { PaymentStatus } from "@/lib/db/student-classes"
 
 export type EnrollResult = { ok: true } | { error: string }
 export type PaymentResult = { ok: true } | { error: string }
 export type NoteResult = { ok: true } | { error: string }
+export type InviteResult = { ok: true; userId: string } | { error: string }
+
+export type InvitableRole = "student" | "industry_user"
 
 const NOTE_MAX_LENGTH = 5000
+
+// Conservative email check — Supabase will do its own validation; this just
+// catches the obvious typo case before an admin call.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -134,4 +142,62 @@ export async function addStudentNote(
 
   revalidatePath("/admin")
   return { ok: true }
+}
+
+export async function inviteUser(input: {
+  email: string
+  fullName: string
+  role: InvitableRole
+}): Promise<InviteResult> {
+  const email = input.email.trim().toLowerCase()
+  const fullName = input.fullName.trim()
+  const role = input.role
+
+  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email" }
+  if (fullName.length > 200) {
+    return { error: "Name can’t exceed 200 characters" }
+  }
+  if (role !== "student" && role !== "industry_user") {
+    return { error: "Invalid role" }
+  }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "admin") return { error: "Forbidden" }
+
+  const admin = createAdminClient()
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+
+  const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(
+    email,
+    {
+      redirectTo: `${siteUrl}/auth/callback?next=/create-password`,
+      data: { full_name: fullName || null },
+    },
+  )
+  if (inviteError) return { error: inviteError.message }
+
+  const userId = data.user?.id
+  if (!userId) return { error: "Invite returned no user id" }
+
+  const { error: profileError } = await admin.from("profiles").insert({
+    id: userId,
+    email,
+    role,
+    full_name: fullName || null,
+    invited_by: me.id,
+    is_active: true,
+  })
+
+  if (profileError) {
+    // Best-effort rollback: don't leave an orphaned auth user. Ignore
+    // delete failures — the auth user can be cleaned up via the admin
+    // dashboard if needed.
+    await admin.auth.admin.deleteUser(userId).catch(() => undefined)
+    return { error: `Profile insert failed: ${profileError.message}` }
+  }
+
+  revalidatePath("/admin")
+  return { ok: true, userId }
 }
