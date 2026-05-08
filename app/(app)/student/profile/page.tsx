@@ -2,6 +2,8 @@ import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { HeadshotUpload } from "@/components/student/HeadshotUpload";
+import { PhotoGallery } from "@/components/student/PhotoGallery";
+import { ResumeUpload } from "@/components/student/ResumeUpload";
 import { TalentProfileForm } from "@/components/student/TalentProfileForm";
 import {
   emptyActorProfile,
@@ -14,9 +16,21 @@ export default async function StudentProfilePage() {
   const supabase = await createClient();
   const { data: actor } = await supabase
     .from("actor_profiles")
-    .select("age, location, birthplace, bio, skills, reel_url, headshot_url")
+    .select(
+      "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url",
+    )
     .eq("profile_id", user.id)
     .maybeSingle();
+
+  const photos = actor
+    ? (
+        await supabase
+          .from("actor_photos")
+          .select("id, url")
+          .eq("actor_profile_id", actor.id)
+          .order("created_at", { ascending: true })
+      ).data ?? []
+    : [];
 
   const initialValues: TalentProfileInput = actor
     ? {
@@ -38,6 +52,8 @@ export default async function StudentProfilePage() {
       />
       <div className="space-y-6">
         <HeadshotUpload currentUrl={actor?.headshot_url ?? null} />
+        <PhotoGallery photos={photos} />
+        <ResumeUpload hasResume={!!actor?.resume_url} />
         <TalentProfileForm initialValues={initialValues} />
       </div>
     </>
