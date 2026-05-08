@@ -24,6 +24,7 @@ const ROLE_NAV: Record<AppRole, { label: string; href: string }[]> = {
   ],
   admin: [
     { label: "Dashboard", href: "/admin" },
+    { label: "Approvals", href: "/admin/approvals" },
     { label: "Casting Calls", href: "/admin/casting-calls" },
   ],
 };

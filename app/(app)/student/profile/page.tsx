@@ -5,6 +5,7 @@ import { HeadshotUpload } from "@/components/student/HeadshotUpload";
 import { PhotoGallery } from "@/components/student/PhotoGallery";
 import { ResumeUpload } from "@/components/student/ResumeUpload";
 import { TalentProfileForm } from "@/components/student/TalentProfileForm";
+import { VisibilityToggle } from "@/components/student/VisibilityToggle";
 import {
   emptyActorProfile,
   type TalentProfileInput,
@@ -17,7 +18,7 @@ export default async function StudentProfilePage() {
   const { data: actor } = await supabase
     .from("actor_profiles")
     .select(
-      "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url",
+      "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url, visibility, approved_at",
     )
     .eq("profile_id", user.id)
     .maybeSingle();
@@ -51,6 +52,10 @@ export default async function StudentProfilePage() {
         description="This is what industry users will see when your profile is approved."
       />
       <div className="space-y-6">
+        <VisibilityToggle
+          visibility={(actor?.visibility ?? "private") as "public" | "private"}
+          approvedAt={actor?.approved_at ?? null}
+        />
         <HeadshotUpload currentUrl={actor?.headshot_url ?? null} />
         <PhotoGallery photos={photos} />
         <ResumeUpload hasResume={!!actor?.resume_url} />
