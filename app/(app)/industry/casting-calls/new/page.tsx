@@ -12,7 +12,7 @@ export default async function NewCastingCallPage() {
         title="Post a casting call"
         description="Posts open immediately. You can close or archive it later."
       />
-      <CastingCallForm initialValues={emptyCastingCall()} />
+      <CastingCallForm mode="create" initialValues={emptyCastingCall()} />
     </>
   )
 }

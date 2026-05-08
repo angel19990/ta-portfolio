@@ -59,27 +59,29 @@ export default async function IndustryCastingCallsPage() {
       ) : (
         <ul className="divide-y rounded-lg border">
           {calls.map((c) => (
-            <li
-              key={c.id}
-              className="flex items-center justify-between gap-4 p-4"
-            >
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="truncate font-medium">{c.title}</span>
-                  <Badge variant={STATUS_VARIANT[c.status]}>
-                    {STATUS_LABEL[c.status]}
-                  </Badge>
+            <li key={c.id}>
+              <Link
+                href={`/industry/casting-calls/${c.id}`}
+                className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-medium">{c.title}</span>
+                    <Badge variant={STATUS_VARIANT[c.status]}>
+                      {STATUS_LABEL[c.status]}
+                    </Badge>
+                  </div>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {[c.project_type, c.location].filter(Boolean).join(" · ") ||
+                      "—"}
+                  </p>
                 </div>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {[c.project_type, c.location].filter(Boolean).join(" · ") ||
-                    "—"}
-                </p>
-              </div>
-              <div className="shrink-0 text-xs text-muted-foreground">
-                {c.deadline
-                  ? `Apply by ${formatDeadline(c.deadline)}`
-                  : "No deadline"}
-              </div>
+                <div className="shrink-0 text-xs text-muted-foreground">
+                  {c.deadline
+                    ? `Apply by ${formatDeadline(c.deadline)}`
+                    : "No deadline"}
+                </div>
+              </Link>
             </li>
           ))}
         </ul>

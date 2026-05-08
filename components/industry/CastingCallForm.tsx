@@ -5,7 +5,11 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
-import { createCastingCall } from "@/app/(app)/industry/casting-calls/actions"
+import {
+  createCastingCall,
+  updateCastingCall,
+} from "@/app/(app)/industry/casting-calls/actions"
+import type { CastingCallStatus } from "@/lib/db/casting-calls"
 import {
   castingCallSchema,
   type CastingCallInput,
@@ -29,35 +33,86 @@ function localEndOfDayISO(dateStr: string): string {
   return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
 }
 
-export function CastingCallForm({
-  initialValues,
-}: {
-  initialValues: CastingCallInput
-}) {
+type FormProps = { initialValues: CastingCallInput } & (
+  | { mode: "create" }
+  | { mode: "edit"; id: string; currentStatus: CastingCallStatus }
+)
+
+export function CastingCallForm(props: FormProps) {
+  const { initialValues, mode } = props
   const router = useRouter()
   const form = useForm<CastingCallInput>({
     resolver: zodResolver(castingCallSchema),
     defaultValues: initialValues,
   })
 
-  async function onSubmit(values: CastingCallInput) {
+  // In edit mode for a draft, allow either keeping draft or promoting to open.
+  // In edit mode for any other status, status is preserved (single Save button).
+  const showDraftAndPost =
+    mode === "create" ||
+    (mode === "edit" && props.currentStatus === "draft")
+
+  async function doSubmit(
+    values: CastingCallInput,
+    nextStatus: CastingCallStatus,
+  ) {
     const deadlineISO = values.deadline
       ? localEndOfDayISO(values.deadline)
       : null
-    const result = await createCastingCall(values, deadlineISO)
-    if ("error" in result) {
-      toast.error(result.error)
-      return
+
+    if (mode === "create") {
+      const result = await createCastingCall(
+        values,
+        deadlineISO,
+        nextStatus as "draft" | "open",
+      )
+      if ("error" in result) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(
+        nextStatus === "draft" ? "Draft saved" : "Casting call posted",
+      )
+      router.push(`/industry/casting-calls/${result.id}`)
+      router.refresh()
+    } else {
+      const result = await updateCastingCall(
+        props.id,
+        values,
+        deadlineISO,
+        nextStatus,
+      )
+      if ("error" in result) {
+        toast.error(result.error)
+        return
+      }
+      toast.success(
+        props.currentStatus === "draft" && nextStatus === "open"
+          ? "Casting call posted"
+          : "Saved",
+      )
+      router.push(`/industry/casting-calls/${props.id}`)
+      router.refresh()
     }
-    toast.success("Casting call posted")
-    router.push("/industry/casting-calls")
-    router.refresh()
   }
+
+  const submitWith = (status: CastingCallStatus) =>
+    form.handleSubmit((values) => doSubmit(values, status))
+
+  const submitting = form.formState.isSubmitting
 
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={
+          showDraftAndPost
+            ? submitWith("open")
+            : submitWith(
+                mode === "edit"
+                  ? props.currentStatus
+                  : ("open" as CastingCallStatus),
+              )
+        }
         className="grid max-w-2xl gap-6"
       >
         <FormField
@@ -207,10 +262,36 @@ export function CastingCallForm({
           )}
         />
 
-        <div>
-          <Button type="submit" disabled={form.formState.isSubmitting}>
-            {form.formState.isSubmitting ? "Posting…" : "Post call"}
-          </Button>
+        <div className="flex flex-wrap gap-2">
+          {showDraftAndPost ? (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={submitting}
+                onClick={submitWith("draft")}
+              >
+                Save as draft
+              </Button>
+              <Button
+                type="button"
+                disabled={submitting}
+                onClick={submitWith("open")}
+              >
+                {mode === "create"
+                  ? submitting
+                    ? "Posting…"
+                    : "Post call"
+                  : submitting
+                    ? "Posting…"
+                    : "Save & post"}
+              </Button>
+            </>
+          ) : (
+            <Button type="submit" disabled={submitting}>
+              {submitting ? "Saving…" : "Save changes"}
+            </Button>
+          )}
         </div>
       </form>
     </Form>
