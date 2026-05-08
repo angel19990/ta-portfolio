@@ -1,6 +1,7 @@
 import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { HeadshotUpload } from "@/components/student/HeadshotUpload";
 import { TalentProfileForm } from "@/components/student/TalentProfileForm";
 import {
   emptyActorProfile,
@@ -13,7 +14,7 @@ export default async function StudentProfilePage() {
   const supabase = await createClient();
   const { data: actor } = await supabase
     .from("actor_profiles")
-    .select("age, location, birthplace, bio, skills, reel_url")
+    .select("age, location, birthplace, bio, skills, reel_url, headshot_url")
     .eq("profile_id", user.id)
     .maybeSingle();
 
@@ -35,7 +36,10 @@ export default async function StudentProfilePage() {
         title="Talent profile"
         description="This is what industry users will see when your profile is approved."
       />
-      <TalentProfileForm initialValues={initialValues} />
+      <div className="space-y-6">
+        <HeadshotUpload currentUrl={actor?.headshot_url ?? null} />
+        <TalentProfileForm initialValues={initialValues} />
+      </div>
     </>
   );
 }
