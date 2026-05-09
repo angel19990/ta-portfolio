@@ -7,6 +7,7 @@ import {
   expectedFormatForMime,
   verifyMagicBytes,
 } from "@/lib/util/file-magic"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type PhotoActionResult =
   | { ok: true; url?: string }
@@ -52,7 +53,7 @@ export async function addPhoto(
     .select("id")
     .eq("profile_id", user.id)
     .maybeSingle()
-  if (actorErr) return { error: actorErr.message }
+  if (actorErr) return { error: friendlyError(actorErr) }
   if (!actor) {
     return { error: "Save your profile details first, then add photos." }
   }
@@ -63,7 +64,7 @@ export async function addPhoto(
   const { error: uploadError } = await supabase.storage
     .from("photos")
     .upload(path, file, { contentType: file.type, upsert: false })
-  if (uploadError) return { error: uploadError.message }
+  if (uploadError) return { error: friendlyError(uploadError) }
 
   const { data: pub } = supabase.storage.from("photos").getPublicUrl(path)
   const url = pub.publicUrl
@@ -78,7 +79,7 @@ export async function addPhoto(
     if (insertError.message.includes("limit (6)")) {
       return { error: `You can have at most ${PHOTO_LIMIT} photos. Delete one first.` }
     }
-    return { error: insertError.message }
+    return { error: friendlyError(insertError) }
   }
 
   revalidatePath("/student/profile")
@@ -100,7 +101,7 @@ export async function deletePhoto(photoId: string): Promise<PhotoActionResult> {
     .select("url")
     .eq("id", photoId)
     .maybeSingle()
-  if (fetchErr) return { error: fetchErr.message }
+  if (fetchErr) return { error: friendlyError(fetchErr) }
   if (!row) return { error: "Photo not found" }
 
   // URL → path: everything after "/photos/" is the object path.
@@ -113,7 +114,7 @@ export async function deletePhoto(photoId: string): Promise<PhotoActionResult> {
     .from("actor_photos")
     .delete()
     .eq("id", photoId)
-  if (dbErr) return { error: dbErr.message }
+  if (dbErr) return { error: friendlyError(dbErr) }
 
   // Best-effort storage cleanup.
   if (path) {

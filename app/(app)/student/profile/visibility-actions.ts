@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type VisibilityResult = { ok: true } | { error: string }
 
@@ -25,7 +26,7 @@ export async function setVisibility(
     .from("actor_profiles")
     .update({ visibility })
     .eq("profile_id", user.id)
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/student/profile")
   return { ok: true }

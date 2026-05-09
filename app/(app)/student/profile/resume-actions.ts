@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { verifyMagicBytes } from "@/lib/util/file-magic"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type ResumeUploadResult = { ok: true } | { error: string }
 export type ResumeUrlResult = { url: string } | { error: string }
@@ -39,7 +40,7 @@ export async function uploadResume(
   const { error: uploadError } = await supabase.storage
     .from("resumes")
     .upload(path, file, { contentType: "application/pdf", upsert: false })
-  if (uploadError) return { error: uploadError.message }
+  if (uploadError) return { error: friendlyError(uploadError) }
 
   // Store the storage path (not a URL) — resumes bucket is private; we sign on read.
   const { error: dbError } = await supabase
@@ -48,7 +49,7 @@ export async function uploadResume(
       { profile_id: user.id, resume_url: path },
       { onConflict: "profile_id" },
     )
-  if (dbError) return { error: dbError.message }
+  if (dbError) return { error: friendlyError(dbError) }
 
   revalidatePath("/student/profile")
   return { ok: true }
@@ -66,13 +67,13 @@ export async function getResumeSignedUrl(): Promise<ResumeUrlResult> {
     .select("resume_url")
     .eq("profile_id", user.id)
     .maybeSingle()
-  if (fetchErr) return { error: fetchErr.message }
+  if (fetchErr) return { error: friendlyError(fetchErr) }
   if (!actor?.resume_url) return { error: "No resume on file" }
 
   const { data, error } = await supabase.storage
     .from("resumes")
     .createSignedUrl(actor.resume_url, SIGNED_URL_TTL_SECONDS)
-  if (error || !data) return { error: error?.message ?? "Could not sign URL" }
+  if (error || !data) return { error: friendlyError(error ?? { message: "Could not sign URL" }) }
 
   return { url: data.signedUrl }
 }

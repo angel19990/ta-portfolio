@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyError } from "@/lib/util/friendly-error";
 
 export type ActionResult = { error: string } | { error: null };
 
@@ -22,7 +23,7 @@ export async function signIn(
     email,
     password,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error, "Sign-in failed. Check your email and password.") };
 
   const { data: profile } = await supabase
     .from("profiles")
@@ -64,7 +65,7 @@ export async function setPasswordFromInvite(
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   revalidatePath("/", "layout");
   redirect("/");
@@ -82,7 +83,7 @@ export async function requestPasswordReset(
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/reset-password`,
   });
-  if (error) return { error: error.message };
+  if (error) return { error: friendlyError(error) };
 
   return { error: null };
 }

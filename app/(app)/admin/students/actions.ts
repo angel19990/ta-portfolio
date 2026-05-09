@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
+import { friendlyError } from "@/lib/util/friendly-error"
 import type { PaymentStatus } from "@/lib/db/student-classes"
 import { inviteUserSchema } from "@/lib/validators/invite-user"
 
@@ -35,19 +36,28 @@ export async function enrollStudentInSection(
     .select("price_cents, classes ( default_price_cents )")
     .eq("id", classSectionId)
     .single()
-  if (sectionError) return { error: sectionError.message }
+  if (sectionError) return { error: friendlyError(sectionError) }
   if (!section) return { error: "Section not found" }
 
   const cls = (() => {
     const raw = (section as { classes: unknown }).classes
     if (!raw) return null
-    if (Array.isArray(raw)) return raw[0] as { default_price_cents: number } | null
-    return raw as { default_price_cents: number }
+    if (Array.isArray(raw))
+      return raw[0] as { default_price_cents: number | null } | null
+    return raw as { default_price_cents: number | null }
   })()
+  const sectionPrice = section.price_cents
+  const classDefault = cls?.default_price_cents
+  // If neither price is set, refuse to enroll — silently flipping the row to
+  // payment_status='paid' would let a misconfigured section give a free pass.
+  if (
+    (sectionPrice === null || sectionPrice === undefined) &&
+    (classDefault === null || classDefault === undefined)
+  ) {
+    return { error: "Section has no price configured" }
+  }
   const price =
-    typeof section.price_cents === "number"
-      ? section.price_cents
-      : cls?.default_price_cents ?? 0
+    typeof sectionPrice === "number" ? sectionPrice : classDefault ?? 0
 
   const { error } = await supabase.from("student_classes").insert({
     profile_id: profileId,
@@ -61,7 +71,7 @@ export async function enrollStudentInSection(
     if (error.code === "23505") {
       return { error: "Student is already enrolled in this section" }
     }
-    return { error: error.message }
+    return { error: friendlyError(error) }
   }
 
   revalidatePath("/admin")
@@ -92,7 +102,7 @@ export async function recordPayment(
     .select("amount_paid_cents, outstanding_cents")
     .eq("id", enrollmentId)
     .single()
-  if (readError) return { error: readError.message }
+  if (readError) return { error: friendlyError(readError) }
   if (!row) return { error: "Enrollment not found" }
 
   const newPaid = row.amount_paid_cents + amountCents
@@ -108,7 +118,7 @@ export async function recordPayment(
       payment_status: newStatus,
     })
     .eq("id", enrollmentId)
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/admin")
   return { ok: true }
@@ -135,7 +145,7 @@ export async function addStudentNote(
     author_id: me.id,
     body: trimmed,
   })
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/admin")
   return { ok: true }
@@ -165,7 +175,7 @@ export async function inviteUser(input: {
     .select("id")
     .eq("email", email)
     .maybeSingle()
-  if (existingError) return { error: existingError.message }
+  if (existingError) return { error: friendlyError(existingError) }
   if (existing) return { error: "A user with that email already exists" }
 
   const siteUrl =
@@ -178,7 +188,7 @@ export async function inviteUser(input: {
       data: { full_name: fullName || null },
     },
   )
-  if (inviteError) return { error: inviteError.message }
+  if (inviteError) return { error: friendlyError(inviteError) }
 
   const userId = data.user?.id
   if (!userId) return { error: "Invite returned no user id" }
@@ -198,7 +208,7 @@ export async function inviteUser(input: {
     await admin.auth.admin.deleteUser(userId).catch((rollbackError) => {
       console.error("invite rollback failed", { userId, error: rollbackError })
     })
-    return { error: `Profile insert failed: ${profileError.message}` }
+    return { error: friendlyError(profileError, "Could not finish creating the user") }
   }
 
   revalidatePath("/admin")

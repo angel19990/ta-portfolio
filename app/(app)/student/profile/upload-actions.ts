@@ -7,6 +7,7 @@ import {
   expectedFormatForMime,
   verifyMagicBytes,
 } from "@/lib/util/file-magic"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type UploadResult = { ok: true; url: string } | { error: string }
 
@@ -48,7 +49,7 @@ export async function uploadHeadshot(
   const { error: uploadError } = await supabase.storage
     .from("headshots")
     .upload(path, file, { contentType: file.type, upsert: false })
-  if (uploadError) return { error: uploadError.message }
+  if (uploadError) return { error: friendlyError(uploadError) }
 
   const { data: pub } = supabase.storage.from("headshots").getPublicUrl(path)
   const url = pub.publicUrl
@@ -59,7 +60,7 @@ export async function uploadHeadshot(
       { profile_id: user.id, headshot_url: url },
       { onConflict: "profile_id" },
     )
-  if (dbError) return { error: dbError.message }
+  if (dbError) return { error: friendlyError(dbError) }
 
   revalidatePath("/student/profile")
   return { ok: true, url }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import { friendlyError } from "@/lib/util/friendly-error"
 import {
   actorProfileSchema,
   type TalentProfileInput,
@@ -31,7 +32,7 @@ export async function saveTalentProfile(
     .from("profiles")
     .update({ full_name: v.full_name })
     .eq("id", user.id)
-  if (profileError) return { error: profileError.message }
+  if (profileError) return { error: friendlyError(profileError) }
 
   const { error: actorError } = await supabase.from("actor_profiles").upsert(
     {
@@ -45,7 +46,7 @@ export async function saveTalentProfile(
     },
     { onConflict: "profile_id" },
   )
-  if (actorError) return { error: actorError.message }
+  if (actorError) return { error: friendlyError(actorError) }
 
   revalidatePath("/student/profile")
   return { ok: true }

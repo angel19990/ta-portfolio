@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { getCurrentUser } from "@/lib/auth/get-user"
 import { createClient } from "@/lib/supabase/server"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type ApplyResult = { ok: true; id: string } | { error: string }
 export type WithdrawResult = { ok: true } | { error: string }
@@ -19,20 +20,32 @@ export async function applyToCastingCall(
 
   const supabase = await createClient()
 
-  // Resolve the actor_profile owned by the current user. RLS on
-  // casting_applications also enforces this, but the lookup gives us
-  // a friendlier error than a 42501 RLS denial.
-  const { data: profile, error: profileError } = await supabase
-    .from("actor_profiles")
-    .select("id")
-    .eq("profile_id", me.id)
-    .maybeSingle()
-  if (profileError) return { error: profileError.message }
-  if (!profile) {
-    return {
-      error: "Complete your profile before applying.",
-    }
+  // Resolve actor_profile + verify call status in parallel. RLS on
+  // casting_applications would block a closed-call insert via 42501, but
+  // the user-facing message reads better when we map it to "this call has
+  // closed" before attempting the insert.
+  const [profileResult, callResult] = await Promise.all([
+    supabase
+      .from("actor_profiles")
+      .select("id")
+      .eq("profile_id", me.id)
+      .maybeSingle(),
+    supabase
+      .from("casting_calls")
+      .select("status")
+      .eq("id", callId)
+      .maybeSingle(),
+  ])
+  if (profileResult.error) return { error: friendlyError(profileResult.error) }
+  if (!profileResult.data) {
+    return { error: "Complete your profile before applying." }
   }
+  if (callResult.error) return { error: friendlyError(callResult.error) }
+  if (!callResult.data) return { error: "Casting call not found" }
+  if (callResult.data.status !== "open") {
+    return { error: "This call is no longer open." }
+  }
+  const profile = profileResult.data
 
   const { data, error } = await supabase
     .from("casting_applications")
@@ -48,7 +61,7 @@ export async function applyToCastingCall(
     if (error.code === "23505") {
       return { error: "You've already applied to this call." }
     }
-    return { error: error.message }
+    return { error: friendlyError(error) }
   }
   if (!data) return { error: "Insert returned no row" }
 
@@ -68,14 +81,14 @@ export async function withdrawApplication(
   if (me.role !== "student") return { error: "Forbidden" }
 
   const supabase = await createClient()
-  // RLS `casting_applications_update_actor` enforces ownership server-side.
-  // No-op if the row doesn't exist or already isn't yours.
+  // RLS `casting_applications_withdraw_actor` (migration 0008) restricts the
+  // new status to 'withdrawn' for the owning actor.
   const { error } = await supabase
     .from("casting_applications")
     .update({ status: "withdrawn" })
     .eq("id", applicationId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/student/casting-calls")
   revalidatePath("/student/applications")
