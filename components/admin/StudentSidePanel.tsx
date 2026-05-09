@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -11,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { transformedImage } from "@/lib/util/storage-image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -92,13 +94,14 @@ export function StudentSidePanel({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="border-b">
           <div className="flex items-start gap-3">
-            <div className="size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
               {actor?.headshot_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={actor.headshot_url}
+                <Image
+                  src={transformedImage(actor.headshot_url, { width: 120 })!}
                   alt={displayName}
-                  className="size-full object-cover"
+                  fill
+                  sizes="56px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">

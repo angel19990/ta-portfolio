@@ -1,5 +1,7 @@
 import { LoginForm } from "@/components/auth/LoginForm";
+import { redirectIfAuthenticated } from "@/lib/auth/redirect-if-authed";
 
-export default function AdminLoginPage() {
+export default async function AdminLoginPage() {
+  await redirectIfAuthenticated();
   return <LoginForm variant="admin" />;
 }

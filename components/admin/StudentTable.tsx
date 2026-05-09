@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useMemo, useState } from "react"
 
 import { Input } from "@/components/ui/input"
@@ -14,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { transformedImage } from "@/lib/util/storage-image"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
 import type { AvailableSection } from "@/lib/db/student-classes"
 import { StudentSidePanel } from "@/components/admin/StudentSidePanel"
@@ -156,13 +158,18 @@ export function StudentTable({ students, sections }: Props) {
                   )}
                 >
                   <TableCell>
-                    <div className="size-8 overflow-hidden rounded-full border bg-muted">
+                    <div className="relative size-8 overflow-hidden rounded-full border bg-muted">
                       {s.actor_profile?.headshot_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={s.actor_profile.headshot_url}
+                        <Image
+                          src={
+                            transformedImage(s.actor_profile.headshot_url, {
+                              width: 80,
+                            })!
+                          }
                           alt={s.full_name ?? s.email}
-                          className="size-full object-cover"
+                          fill
+                          sizes="32px"
+                          className="object-cover"
                         />
                       ) : null}
                     </div>

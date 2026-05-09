@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -6,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { ResumeViewButton } from "@/components/industry/ResumeViewButton";
+import { transformedImage } from "@/lib/util/storage-image";
 
 type Params = Promise<{ id: string }>;
 
@@ -50,15 +52,17 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
           .filter(Boolean)
           .join(" · ")}
       />
-      <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+      <div className="grid gap-6 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="space-y-4">
-          <div className="aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
             {a.headshot_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={a.headshot_url}
+              <Image
+                src={transformedImage(a.headshot_url, { width: 600 })!}
                 alt={a.profiles?.full_name ?? "Actor"}
-                className="size-full object-cover"
+                fill
+                priority
+                sizes="(max-width: 768px) 100vw, 280px"
+                className="object-cover"
               />
             ) : (
               <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
@@ -113,16 +117,17 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
             <section>
               <h2 className="text-sm font-medium">Gallery</h2>
               <ul className="mt-2 grid grid-cols-3 gap-2">
-                {photos.map((p) => (
+                {photos.map((p, i) => (
                   <li
                     key={p.id}
-                    className="aspect-square overflow-hidden rounded-md border bg-muted"
+                    className="relative aspect-square overflow-hidden rounded-md border bg-muted"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={p.url}
-                      alt="Gallery photo"
-                      className="size-full object-cover"
+                    <Image
+                      src={transformedImage(p.url, { width: 400 })!}
+                      alt={`Gallery photo ${i + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 33vw, 200px"
+                      className="object-cover"
                     />
                   </li>
                 ))}

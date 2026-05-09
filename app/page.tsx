@@ -9,8 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { redirectIfAuthenticated } from "@/lib/auth/redirect-if-authed";
 
-export default function HomePage() {
+export default async function HomePage() {
+  await redirectIfAuthenticated();
   return (
     <div className="flex min-h-screen flex-col">
       <header className="border-b">

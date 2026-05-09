@@ -149,6 +149,7 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
     )
     .eq("role", "student")
     .order("created_at", { ascending: false })
+    .limit(200)
 
   if (error) throw error
   if (!data) return []

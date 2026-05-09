@@ -41,17 +41,22 @@ export default async function StudentCastingCallDetailPage({
 }) {
   const me = await requireRole("student")
   const { id } = await params
-  const call = await getOpenCastingCallById(id)
-  if (!call) notFound()
 
   const supabase = await createClient()
-  const { data: actorRow } = await supabase
-    .from("actor_profiles")
-    .select("id")
-    .eq("profile_id", me.id)
-    .maybeSingle()
-
-  const application = await getMyApplicationForCall(id)
+  // Run the three reads in parallel: getOpenCastingCallById is a single
+  // Supabase query, the actor_profile lookup is another, and the application
+  // lookup is the third. Each is gated by RLS and uses the user's session.
+  const [call, actorRowResult, application] = await Promise.all([
+    getOpenCastingCallById(id),
+    supabase
+      .from("actor_profiles")
+      .select("id")
+      .eq("profile_id", me.id)
+      .maybeSingle(),
+    getMyApplicationForCall(id, me.id),
+  ])
+  if (!call) notFound()
+  const actorRow = actorRowResult.data
   const canWithdraw =
     application !== null &&
     (application.status === "submitted" ||

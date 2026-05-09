@@ -1,5 +1,6 @@
 "use client"
 
+import Image from "next/image"
 import { useRef, useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -9,6 +10,7 @@ import {
   addPhoto,
   deletePhoto,
 } from "@/app/(app)/student/profile/photo-actions"
+import { transformedImage } from "@/lib/util/storage-image"
 
 type Photo = { id: string; url: string }
 
@@ -95,22 +97,24 @@ export function PhotoGallery({ photos }: Props) {
 
       {photos.length > 0 ? (
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <li
               key={p.id}
               className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={p.url}
-                alt="Gallery photo"
-                className="size-full object-cover"
+              <Image
+                src={transformedImage(p.url, { width: 400 })!}
+                alt={`Photo ${i + 1}`}
+                fill
+                sizes="(max-width: 640px) 33vw, 16vw"
+                className="object-cover"
               />
               <button
                 type="button"
                 onClick={() => onDelete(p.id)}
                 disabled={pendingDeleteId === p.id}
-                className="absolute inset-x-1 bottom-1 rounded-sm bg-black/70 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-50"
+                aria-label={`Remove photo ${i + 1}`}
+                className="absolute inset-x-1 bottom-1 rounded-sm bg-black/70 px-2 py-1 text-xs font-medium text-white opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-50 [@media(hover:none)]:opacity-100"
               >
                 {pendingDeleteId === p.id ? "Removing…" : "Remove"}
               </button>
