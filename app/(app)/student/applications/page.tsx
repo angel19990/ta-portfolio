@@ -62,7 +62,7 @@ export default async function StudentApplicationsPage() {
                   href={
                     a.call ? `/student/casting-calls/${a.call.id}` : "#"
                   }
-                  className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50"
+                  className="flex items-center justify-between gap-4 p-4 outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
                   aria-disabled={!a.call}
                 >
                   <div className="min-w-0">

@@ -26,7 +26,7 @@ export function ActorCard({
   return (
     <Link
       href={`/industry/talent/${id}`}
-      className="group block overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md"
+      className="group block overflow-hidden rounded-lg border bg-card outline-none transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring/50"
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
         {headshotUrl ? (
