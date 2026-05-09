@@ -8,6 +8,15 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "athfcofvmcnrescfcdyb.supabase.co",
+        pathname: "/storage/v1/object/**",
+      },
+    ],
+  },
   experimental: {
     serverActions: {
       // Default is 1MB. Our largest accepted upload is 10 MB (resume PDF);

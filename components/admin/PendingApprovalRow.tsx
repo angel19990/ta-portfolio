@@ -1,6 +1,7 @@
 "use client"
 
 import { useTransition } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -41,13 +42,14 @@ export function PendingApprovalRow({
 
   return (
     <li className="flex items-start gap-4 rounded-lg border p-4">
-      <div className="size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
         {headshotUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={headshotUrl}
             alt={fullName ?? email}
-            className="size-full object-cover"
+            fill
+            sizes="64px"
+            className="object-cover"
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">

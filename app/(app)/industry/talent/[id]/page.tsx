@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
@@ -52,13 +53,14 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
       />
       <div className="grid gap-6 md:grid-cols-[280px_1fr]">
         <div className="space-y-4">
-          <div className="aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
             {a.headshot_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={a.headshot_url}
                 alt={a.profiles?.full_name ?? "Actor"}
-                className="size-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 280px"
+                className="object-cover"
               />
             ) : (
               <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
@@ -116,13 +118,14 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
                 {photos.map((p) => (
                   <li
                     key={p.id}
-                    className="aspect-square overflow-hidden rounded-md border bg-muted"
+                    className="relative aspect-square overflow-hidden rounded-md border bg-muted"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={p.url}
                       alt="Gallery photo"
-                      className="size-full object-cover"
+                      fill
+                      sizes="(max-width: 768px) 33vw, 200px"
+                      className="object-cover"
                     />
                   </li>
                 ))}

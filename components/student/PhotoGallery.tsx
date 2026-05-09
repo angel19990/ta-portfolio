@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -100,11 +101,12 @@ export function PhotoGallery({ photos }: Props) {
               key={p.id}
               className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={p.url}
                 alt="Gallery photo"
-                className="size-full object-cover"
+                fill
+                sizes="(max-width: 640px) 33vw, 16vw"
+                className="object-cover"
               />
               <button
                 type="button"

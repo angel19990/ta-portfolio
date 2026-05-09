@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -27,13 +28,14 @@ export function ActorCard({
       href={`/industry/talent/${id}`}
       className="group block overflow-hidden rounded-lg border bg-card transition-shadow hover:shadow-md"
     >
-      <div className="aspect-[4/5] w-full overflow-hidden bg-muted">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
         {headshotUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={headshotUrl}
             alt={fullName ?? "Actor"}
-            className="size-full object-cover transition-transform group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform group-hover:scale-105"
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
