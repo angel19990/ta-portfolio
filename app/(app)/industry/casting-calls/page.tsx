@@ -53,8 +53,8 @@ export default async function IndustryCastingCallsPage() {
         }
       />
       {calls.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          You haven&apos;t posted a call yet.
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No casting calls yet. Create your first one.
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">

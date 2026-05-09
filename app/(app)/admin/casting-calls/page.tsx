@@ -21,8 +21,8 @@ export default async function AdminCastingCallsPage() {
         description="Every call across the network. Archive force-removes a call from the platform."
       />
       {calls.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          No casting calls yet.
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No casting calls to review.
         </div>
       ) : (
         <Table>

@@ -23,8 +23,8 @@ export default async function StudentCastingCallsPage() {
         description="Open calls you can apply to."
       />
       {calls.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          No open casting calls right now. Check back soon.
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No open casting calls right now. Check back later.
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">

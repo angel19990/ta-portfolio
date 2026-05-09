@@ -44,15 +44,8 @@ export default async function StudentApplicationsPage() {
         description="Casting calls you've applied to."
       />
       {apps.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          You haven&apos;t applied to any casting calls yet.{" "}
-          <Link
-            href="/student/casting-calls"
-            className="text-foreground underline-offset-4 hover:underline"
-          >
-            Browse open calls
-          </Link>
-          .
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          You haven&apos;t applied to anything yet.
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">
