@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { setCastingCallStatus } from "@/app/(app)/industry/casting-calls/actions"
@@ -47,7 +46,6 @@ function formatDate(iso: string): string {
 }
 
 export function AdminCastingCallRow({ call }: { call: AdminCallRow }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -60,7 +58,6 @@ export function AdminCastingCallRow({ call }: { call: AdminCallRow }) {
       }
       toast.success("Call archived")
       setOpen(false)
-      router.refresh()
     })
   }
 

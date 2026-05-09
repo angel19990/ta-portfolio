@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { withdrawApplication } from "@/app/(app)/student/casting-calls/actions"
@@ -22,7 +21,6 @@ export function WithdrawButton({
   applicationId: string
   callTitle: string
 }) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [pending, startTransition] = useTransition()
 
@@ -35,7 +33,6 @@ export function WithdrawButton({
       }
       toast.success("Application withdrawn")
       setOpen(false)
-      router.refresh()
     })
   }
 

@@ -1,5 +1,13 @@
 import { z } from "zod"
 
+// Form date fields use YYYY-MM-DD or empty string. Lexicographic compare in
+// the refine works correctly only with this format. Deadline is a datetime-
+// local but the page-level helper keeps it a YYYY-MM-DD here too — the action
+// derives the ISO timestamp itself.
+const dateOrEmpty = z
+  .string()
+  .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use YYYY-MM-DD")
+
 export const castingCallSchema = z
   .object({
     title: z.string().trim().min(1, "Title is required").max(200),
@@ -8,9 +16,9 @@ export const castingCallSchema = z
     union_status: z.string().trim().max(80),
     pay_status: z.string().trim().max(80),
     location: z.string().trim().max(200),
-    shoot_start: z.string().max(20),
-    shoot_end: z.string().max(20),
-    deadline: z.string().max(20),
+    shoot_start: dateOrEmpty,
+    shoot_end: dateOrEmpty,
+    deadline: dateOrEmpty,
     description: z.string().trim().max(5000),
   })
   .refine(

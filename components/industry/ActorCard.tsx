@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
+import { transformedImage } from "@/lib/util/storage-image";
 
 type Props = {
   id: string;
@@ -22,6 +23,7 @@ export function ActorCard({
 }: Props) {
   const topSkills = skills.slice(0, 3);
   const remaining = skills.length - topSkills.length;
+  const transformed = transformedImage(headshotUrl, { width: 600 });
 
   return (
     <Link
@@ -29,9 +31,9 @@ export function ActorCard({
       className="group block overflow-hidden rounded-lg border bg-card outline-none transition-shadow hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring/50"
     >
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
-        {headshotUrl ? (
+        {transformed ? (
           <Image
-            src={headshotUrl}
+            src={transformed}
             alt={fullName ?? "Actor"}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"

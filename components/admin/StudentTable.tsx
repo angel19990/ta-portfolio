@@ -1,7 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import Image from "next/image"
+import { useMemo, useState } from "react"
 
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { transformedImage } from "@/lib/util/storage-image"
 import type { AdminStudent, StudentStatus } from "@/lib/db/students"
 import type { AvailableSection } from "@/lib/db/student-classes"
 import { StudentSidePanel } from "@/components/admin/StudentSidePanel"
@@ -150,17 +151,17 @@ export function StudentTable({ students, sections }: Props) {
               filtered.map((s) => (
                 <TableRow
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
-                  className={cn(
-                    "cursor-pointer",
-                    selectedId === s.id && "bg-muted/50",
-                  )}
+                  className={cn(selectedId === s.id && "bg-muted/50")}
                 >
                   <TableCell>
                     <div className="relative size-8 overflow-hidden rounded-full border bg-muted">
                       {s.actor_profile?.headshot_url ? (
                         <Image
-                          src={s.actor_profile.headshot_url}
+                          src={
+                            transformedImage(s.actor_profile.headshot_url, {
+                              width: 80,
+                            })!
+                          }
                           alt={s.full_name ?? s.email}
                           fill
                           sizes="32px"
@@ -170,11 +171,20 @@ export function StudentTable({ students, sections }: Props) {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {s.full_name ?? (
-                      <span className="italic text-muted-foreground">
-                        Unnamed
-                      </span>
-                    )}
+                    {/* Real button gives keyboard users an explicit affordance
+                        to open the side panel; the row no longer carries the
+                        click handler. */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(s.id)}
+                      className="text-left hover:underline focus:outline-none focus-visible:underline"
+                    >
+                      {s.full_name ?? (
+                        <span className="italic text-muted-foreground">
+                          Unnamed
+                        </span>
+                      )}
+                    </button>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {s.email}

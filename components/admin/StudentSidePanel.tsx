@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useTransition } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useCallback, useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import {
@@ -12,12 +11,21 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet"
+import { transformedImage } from "@/lib/util/storage-image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { approveActor } from "@/app/(app)/admin/approvals/actions"
-import { addStudentNote } from "@/app/(app)/admin/students/actions"
-import type { AdminStudent, StudentStatus } from "@/lib/db/students"
+import {
+  addStudentNote,
+  loadStudentDetail,
+} from "@/app/(app)/admin/students/actions"
+import type {
+  AdminStudent,
+  AdminStudentDetail,
+  StudentStatus,
+} from "@/lib/db/students"
 import type { AvailableSection, EnrollmentRow } from "@/lib/db/student-classes"
 import type { StudentNote } from "@/lib/db/student-notes"
 import { AddClassToStudentDialog } from "@/components/admin/AddClassToStudentDialog"
@@ -54,12 +62,50 @@ export function StudentSidePanel({
   open,
   onOpenChange,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [addClassOpen, setAddClassOpen] = useState(false)
   const [paymentEnrollmentId, setPaymentEnrollmentId] = useState<string | null>(
     null,
   )
+  // Detail is keyed by studentId so a stale fetch resolving after the user
+  // switched rows can't show old data — we only render `payload` when its
+  // forStudentId matches the current student.
+  type DetailState = {
+    forStudentId: string
+    loading: boolean
+    payload: AdminStudentDetail | null
+  } | null
+  const [detailState, setDetailState] = useState<DetailState>(null)
+
+  const studentId = student?.id ?? null
+  const visibleDetail =
+    detailState && detailState.forStudentId === studentId
+      ? detailState.payload
+      : null
+  const detailLoading =
+    detailState != null &&
+    detailState.forStudentId === studentId &&
+    detailState.loading
+
+  const refreshDetail = useCallback(async (id: string) => {
+    setDetailState({ forStudentId: id, loading: true, payload: null })
+    const result = await loadStudentDetail(id)
+    setDetailState((prev) => {
+      // Drop the result if we're now fetching/showing a different student.
+      if (!prev || prev.forStudentId !== id) return prev
+      if ("error" in result) {
+        toast.error(result.error)
+        return { forStudentId: id, loading: false, payload: null }
+      }
+      return { forStudentId: id, loading: false, payload: result.detail }
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!studentId) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshDetail(studentId)
+  }, [studentId, refreshDetail])
 
   if (!student) {
     return (
@@ -71,7 +117,9 @@ export function StudentSidePanel({
 
   const actor = student.actor_profile
   const displayName = student.full_name ?? "Unnamed"
-  const enrolledSectionIds = student.enrollments
+  const enrollments = visibleDetail?.enrollments ?? []
+  const notes = visibleDetail?.notes ?? []
+  const enrolledSectionIds = enrollments
     .map((e) => e.section?.id)
     .filter((v): v is string => typeof v === "string")
 
@@ -84,7 +132,6 @@ export function StudentSidePanel({
         return
       }
       toast.success(`Approved ${displayName}`)
-      router.refresh()
     })
   }
 
@@ -96,7 +143,7 @@ export function StudentSidePanel({
             <div className="relative size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
               {actor?.headshot_url ? (
                 <Image
-                  src={actor.headshot_url}
+                  src={transformedImage(actor.headshot_url, { width: 120 })!}
                   alt={displayName}
                   fill
                   sizes="56px"
@@ -168,11 +215,13 @@ export function StudentSidePanel({
               </Button>
             }
           >
-            {student.enrollments.length === 0 ? (
+            {detailLoading && !visibleDetail ? (
+              <DetailSkeleton rows={2} />
+            ) : enrollments.length === 0 ? (
               <Empty>Not enrolled in any classes yet.</Empty>
             ) : (
               <ul className="space-y-2">
-                {student.enrollments.map((e) => (
+                {enrollments.map((e) => (
                   <EnrollmentItem
                     key={e.id}
                     enrollment={e}
@@ -183,12 +232,16 @@ export function StudentSidePanel({
             )}
           </Section>
 
-          <Section title="Dues">
-            <Empty>Payment tracking lands in Phase 3 Task 3.</Empty>
-          </Section>
-
           <Section title="Notes">
-            <NotesThread profileId={student.id} notes={student.notes} />
+            {detailLoading && !visibleDetail ? (
+              <DetailSkeleton rows={2} />
+            ) : (
+              <NotesThread
+                profileId={student.id}
+                notes={notes}
+                onAfterSubmit={() => refreshDetail(student.id)}
+              />
+            )}
           </Section>
         </div>
       </SheetContent>
@@ -198,10 +251,13 @@ export function StudentSidePanel({
         sections={sections}
         excludeSectionIds={enrolledSectionIds}
         open={addClassOpen}
-        onOpenChange={setAddClassOpen}
+        onOpenChange={(next) => {
+          setAddClassOpen(next)
+          if (!next) refreshDetail(student.id)
+        }}
       />
       {(() => {
-        const active = student.enrollments.find(
+        const active = enrollments.find(
           (e) => e.id === paymentEnrollmentId,
         )
         const className = active?.section?.class?.name ?? "Class"
@@ -213,7 +269,10 @@ export function StudentSidePanel({
             amountPaidCents={active?.amount_paid_cents ?? 0}
             open={paymentEnrollmentId !== null}
             onOpenChange={(open) => {
-              if (!open) setPaymentEnrollmentId(null)
+              if (!open) {
+                setPaymentEnrollmentId(null)
+                refreshDetail(student.id)
+              }
             }}
           />
         )
@@ -275,11 +334,12 @@ function EnrollmentItem({
 function NotesThread({
   profileId,
   notes,
+  onAfterSubmit,
 }: {
   profileId: string
   notes: StudentNote[]
+  onAfterSubmit?: () => void
 }) {
-  const router = useRouter()
   const [body, setBody] = useState("")
   const [isPending, startTransition] = useTransition()
 
@@ -295,7 +355,7 @@ function NotesThread({
       }
       toast.success("Note added")
       setBody("")
-      router.refresh()
+      onAfterSubmit?.()
     })
   }
 
@@ -420,5 +480,15 @@ function Empty({ children }: { children: React.ReactNode }) {
     <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
       {children}
     </p>
+  )
+}
+
+function DetailSkeleton({ rows = 2 }: { rows?: number }) {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
+    </div>
   )
 }

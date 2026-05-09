@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/get-user"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type ApproveResult = { ok: true } | { error: string }
 
@@ -23,8 +24,12 @@ export async function approveActor(
     .from("actor_profiles")
     .update({ approved_at: new Date().toISOString() })
     .eq("id", actorProfileId)
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
+  // Approval flips actor visibility on the talent grid + admin views.
   revalidatePath("/admin/approvals")
+  revalidatePath("/admin")
+  revalidatePath("/industry/talent")
+  revalidatePath(`/industry/talent/${actorProfileId}`)
   return { ok: true }
 }

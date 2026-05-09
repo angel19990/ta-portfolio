@@ -1,66 +1,59 @@
-"use client";
+"use client"
 
-import { useState } from "react";
-import Link from "next/link";
-import { Menu } from "lucide-react";
+import Link from "next/link"
+import { useState } from "react"
+import { Menu } from "lucide-react"
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@/components/ui/sheet"
 
-type NavItem = { label: string; href: string };
+type NavItem = { label: string; href: string }
 
 type Props = {
-  items: NavItem[];
-  signOut: () => Promise<void> | void;
-};
+  items: NavItem[]
+}
 
-export function MobileNav({ items, signOut }: Props) {
-  const [open, setOpen] = useState(false);
+export function MobileNav({ items }: Props) {
+  const [open, setOpen] = useState(false)
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
           <Button
+            type="button"
             variant="ghost"
-            size="icon-sm"
-            aria-label="Open menu"
+            size="icon"
+            aria-label="Open navigation"
             className="md:hidden"
           />
         }
       >
-        <Menu />
+        <Menu className="size-5" />
       </SheetTrigger>
-      <SheetContent side="right" className="w-3/4 p-0 sm:max-w-sm">
-        <SheetHeader className="border-b">
+      <SheetContent side="left" className="w-72">
+        <SheetHeader>
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
-        <nav className="flex flex-col gap-1 px-4 py-3">
+        <nav className="flex flex-col px-4 pb-4">
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               onClick={() => setOpen(false)}
-              className="rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
+              className="rounded-md px-2 py-2 text-sm text-foreground hover:bg-muted"
             >
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="mt-auto border-t p-4">
-          <form action={signOut}>
-            <Button type="submit" variant="outline" className="w-full">
-              Sign out
-            </Button>
-          </form>
-        </div>
       </SheetContent>
     </Sheet>
-  );
+  )
 }

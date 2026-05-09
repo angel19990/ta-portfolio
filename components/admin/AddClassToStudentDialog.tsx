@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import {
@@ -14,6 +13,13 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { teacherFromSectionCode } from "@/lib/teachers"
 import type { AvailableSection } from "@/lib/db/student-classes"
 import { enrollStudentInSection } from "@/app/(app)/admin/students/actions"
@@ -35,7 +41,6 @@ export function AddClassToStudentDialog({
   open,
   onOpenChange,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [sectionId, setSectionId] = useState<string>("")
 
@@ -54,7 +59,6 @@ export function AddClassToStudentDialog({
       toast.success("Class added")
       setSectionId("")
       onOpenChange(false)
-      router.refresh()
     })
   }
 
@@ -77,22 +81,21 @@ export function AddClassToStudentDialog({
                   : "Already enrolled in every active section."}
               </p>
             ) : (
-              <select
-                id="section"
+              <Select
                 value={sectionId}
-                onChange={(e) => setSectionId(e.target.value)}
-                required
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                onValueChange={(next) => setSectionId(next ?? "")}
               >
-                <option value="" disabled>
-                  Pick a section…
-                </option>
-                {available.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {formatSectionLabel(s)}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger id="section" className="w-full">
+                  <SelectValue placeholder="Pick a section…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {available.map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {formatSectionLabel(s)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
           <DialogFooter>

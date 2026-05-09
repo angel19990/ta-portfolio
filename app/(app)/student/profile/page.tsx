@@ -15,22 +15,26 @@ export default async function StudentProfilePage() {
   const user = await requireRole("student");
 
   const supabase = await createClient();
-  const { data: actor } = await supabase
-    .from("actor_profiles")
-    .select(
-      "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url, visibility, approved_at",
-    )
-    .eq("profile_id", user.id)
-    .maybeSingle();
-
+  // Fire the actor query and a tentative photos query in parallel, gated by
+  // a profile_id-based subselect on actor_photos so we don't need the
+  // actor_profile_id from the first query before kicking it off.
+  const [actorResult, photosResult] = await Promise.all([
+    supabase
+      .from("actor_profiles")
+      .select(
+        "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url, visibility, approved_at",
+      )
+      .eq("profile_id", user.id)
+      .maybeSingle(),
+    supabase
+      .from("actor_photos")
+      .select("id, url, actor_profiles!inner(profile_id)")
+      .eq("actor_profiles.profile_id", user.id)
+      .order("created_at", { ascending: true }),
+  ]);
+  const actor = actorResult.data;
   const photos = actor
-    ? (
-        await supabase
-          .from("actor_photos")
-          .select("id, url")
-          .eq("actor_profile_id", actor.id)
-          .order("created_at", { ascending: true })
-      ).data ?? []
+    ? (photosResult.data ?? []).map((row) => ({ id: row.id, url: row.url }))
     : [];
 
   const initialValues: TalentProfileInput = actor

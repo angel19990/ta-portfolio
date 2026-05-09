@@ -1,8 +1,7 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useRef, useState, useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -10,6 +9,7 @@ import {
   addPhoto,
   deletePhoto,
 } from "@/app/(app)/student/profile/photo-actions"
+import { transformedImage } from "@/lib/util/storage-image"
 
 type Photo = { id: string; url: string }
 
@@ -22,7 +22,6 @@ const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"]
 const PHOTO_LIMIT = 6
 
 export function PhotoGallery({ photos }: Props) {
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, startUpload] = useTransition()
@@ -62,7 +61,6 @@ export function PhotoGallery({ photos }: Props) {
       toast.success("Photo added")
       setFile(null)
       if (inputRef.current) inputRef.current.value = ""
-      router.refresh()
     })
   }
 
@@ -76,7 +74,6 @@ export function PhotoGallery({ photos }: Props) {
         return
       }
       toast.success("Photo removed")
-      router.refresh()
     })
   }
 
@@ -96,14 +93,14 @@ export function PhotoGallery({ photos }: Props) {
 
       {photos.length > 0 ? (
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-          {photos.map((p) => (
+          {photos.map((p, i) => (
             <li
               key={p.id}
               className="group relative aspect-square overflow-hidden rounded-md border bg-muted"
             >
               <Image
-                src={p.url}
-                alt="Gallery photo"
+                src={transformedImage(p.url, { width: 400 })!}
+                alt={`Photo ${i + 1}`}
                 fill
                 sizes="(max-width: 640px) 33vw, 16vw"
                 className="object-cover"
@@ -111,9 +108,8 @@ export function PhotoGallery({ photos }: Props) {
               <button
                 type="button"
                 onClick={() => onDelete(p.id)}
-                disabled={pendingDeleteId === p.id}
-                aria-label="Remove photo"
-                className="absolute inset-x-1 bottom-1 rounded-sm bg-black/70 px-2 py-1 text-xs font-medium text-white opacity-0 outline-none transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50"
+                aria-label={`Remove photo ${i + 1}`}
+                className="absolute inset-x-1 bottom-1 rounded-sm bg-black/70 px-2 py-1 text-xs font-medium text-white opacity-0 outline-none transition-opacity group-hover:opacity-100 focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-ring/50 disabled:opacity-50 [@media(hover:none)]:opacity-100"
               >
                 {pendingDeleteId === p.id ? "Removing…" : "Remove"}
               </button>

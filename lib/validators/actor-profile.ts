@@ -17,8 +17,12 @@ export const actorProfileSchema = z.object({
     .trim()
     .max(500)
     .refine(
-      (v) => v === "" || z.url().safeParse(v).success,
-      { message: "Must be a valid URL" },
+      // Block javascript:/data:/vbscript: schemes — reel_url is rendered as
+      // an <a href> for industry users, so a non-http(s) value would XSS.
+      (v) =>
+        v === "" ||
+        (z.url().safeParse(v).success && /^https?:\/\//i.test(v)),
+      { message: "Must be an http(s) URL" },
     ),
 })
 

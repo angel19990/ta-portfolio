@@ -1,8 +1,9 @@
+import { LoadingRegion } from "@/components/ui/loading-region";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function StudentCastingCallsLoading() {
   return (
-    <>
+    <LoadingRegion>
       <div className="mb-6 space-y-2">
         <Skeleton className="h-7 w-48" />
         <Skeleton className="h-4 w-72 max-w-full" />
@@ -22,6 +23,6 @@ export default function StudentCastingCallsLoading() {
           </li>
         ))}
       </ul>
-    </>
+    </LoadingRegion>
   );
 }

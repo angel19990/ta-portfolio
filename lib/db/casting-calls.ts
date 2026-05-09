@@ -23,6 +23,9 @@ export type CastingCallRow = {
 const CALL_COLUMNS =
   "id, title, production_company, project_type, union_status, pay_status, shoot_start, shoot_end, deadline, location, description, status, created_at"
 
+// Default page size for list views — bumps to a "load more" UI later if needed.
+const LIST_LIMIT = 50
+
 // `casting_calls_select_open` lets any authenticated user see open rows, so we
 // can't rely on RLS alone for an owner-only view — filter by created_by.
 export async function listOwnCastingCalls(): Promise<CastingCallRow[]> {
@@ -37,6 +40,7 @@ export async function listOwnCastingCalls(): Promise<CastingCallRow[]> {
     .select(CALL_COLUMNS)
     .eq("created_by", user.id)
     .order("created_at", { ascending: false })
+    .limit(LIST_LIMIT)
 
   if (error) throw error
   return (data ?? []) as CastingCallRow[]
@@ -73,6 +77,7 @@ export async function listOpenCastingCalls(): Promise<CastingCallRow[]> {
     .eq("status", "open")
     .order("deadline", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
+    .limit(LIST_LIMIT)
 
   if (error) throw error
   return (data ?? []) as CastingCallRow[]
@@ -100,6 +105,7 @@ export async function listAllCastingCallsForAdmin(): Promise<
       `,
     )
     .order("created_at", { ascending: false })
+    .limit(LIST_LIMIT)
 
   if (error) throw error
   if (!data) return []

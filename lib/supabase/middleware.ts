@@ -1,8 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-type AppRole = "student" | "industry_user" | "admin";
-
 const PUBLIC_ROUTES = [
   "/",
   "/login",
@@ -10,11 +8,6 @@ const PUBLIC_ROUTES = [
   "/create-password",
   "/reset-password",
 ];
-const ROLE_HOME: Record<AppRole, string> = {
-  student: "/student/profile",
-  industry_user: "/industry/casting-calls",
-  admin: "/admin",
-};
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -40,6 +33,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
+  // Auth check only — no profile/role lookup. Per-role authorization is
+  // handled by `requireRole` in each role-segment page (which is React
+  // `cache()`-deduped, so it's one DB hit per request, not two like the
+  // old middleware + page double-fetch). Sending authed users to their
+  // home from `/` and `/login` is handled by `redirectIfAuthenticated`
+  // on those specific pages.
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -52,37 +51,7 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login/student";
-    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
-  }
-
-  if (user) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = profile?.role as AppRole | undefined;
-
-    if (role) {
-      const inWrongSection =
-        (pathname.startsWith("/student") && role !== "student") ||
-        (pathname.startsWith("/industry") && role !== "industry_user") ||
-        (pathname.startsWith("/admin") && role !== "admin");
-
-      if (inWrongSection) {
-        const url = request.nextUrl.clone();
-        url.pathname = ROLE_HOME[role];
-        return NextResponse.redirect(url);
-      }
-
-      if (pathname === "/" || pathname.startsWith("/login")) {
-        const url = request.nextUrl.clone();
-        url.pathname = ROLE_HOME[role];
-        return NextResponse.redirect(url);
-      }
-    }
   }
 
   return response;

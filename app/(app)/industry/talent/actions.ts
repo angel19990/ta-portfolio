@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
+import { friendlyError } from "@/lib/util/friendly-error"
 
 export type ResumeUrlResult = { url: string } | { error: string }
 
@@ -32,7 +33,7 @@ export async function getActorResumeSignedUrl(
     .select("resume_url")
     .eq("id", actorProfileId)
     .maybeSingle()
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
   if (!actor) return { error: "Actor not found" }
   if (!actor.resume_url) return { error: "No resume on file" }
 
@@ -41,7 +42,7 @@ export async function getActorResumeSignedUrl(
   const { data, error: signErr } = await admin.storage
     .from("resumes")
     .createSignedUrl(actor.resume_url, SIGNED_URL_TTL_SECONDS)
-  if (signErr || !data) return { error: signErr?.message ?? "Could not sign URL" }
+  if (signErr || !data) return { error: friendlyError(signErr ?? { message: "Could not sign URL" }) }
 
   return { url: data.signedUrl }
 }

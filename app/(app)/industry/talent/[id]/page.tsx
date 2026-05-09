@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { ResumeViewButton } from "@/components/industry/ResumeViewButton";
+import { transformedImage } from "@/lib/util/storage-image";
 
 type Params = Promise<{ id: string }>;
 
@@ -51,14 +52,15 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
           .filter(Boolean)
           .join(" · ")}
       />
-      <div className="grid gap-6 md:grid-cols-[280px_1fr]">
+      <div className="grid gap-6 md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr]">
         <div className="space-y-4">
           <div className="relative aspect-[4/5] overflow-hidden rounded-lg border bg-muted">
             {a.headshot_url ? (
               <Image
-                src={a.headshot_url}
+                src={transformedImage(a.headshot_url, { width: 600 })!}
                 alt={a.profiles?.full_name ?? "Actor"}
                 fill
+                priority
                 sizes="(max-width: 768px) 100vw, 280px"
                 className="object-cover"
               />
@@ -115,14 +117,14 @@ export default async function ActorDetailPage({ params }: { params: Params }) {
             <section>
               <h2 className="text-sm font-medium">Gallery</h2>
               <ul className="mt-2 grid grid-cols-3 gap-2">
-                {photos.map((p) => (
+                {photos.map((p, i) => (
                   <li
                     key={p.id}
                     className="relative aspect-square overflow-hidden rounded-md border bg-muted"
                   >
                     <Image
-                      src={p.url}
-                      alt="Gallery photo"
+                      src={transformedImage(p.url, { width: 400 })!}
+                      alt={`Gallery photo ${i + 1}`}
                       fill
                       sizes="(max-width: 768px) 33vw, 200px"
                       className="object-cover"

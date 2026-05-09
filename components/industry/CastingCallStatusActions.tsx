@@ -1,7 +1,6 @@
 "use client"
 
 import { useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { setCastingCallStatus } from "@/app/(app)/industry/casting-calls/actions"
@@ -24,7 +23,6 @@ export function CastingCallStatusActions({
   id: string
   currentStatus: CastingCallStatus
 }) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
 
   function transition(next: CastingCallStatus, label: string) {
@@ -35,7 +33,6 @@ export function CastingCallStatusActions({
         return
       }
       toast.success(label)
-      router.refresh()
     })
   }
 

@@ -5,20 +5,45 @@ import { revalidatePath } from "next/cache"
 import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
-import type { PaymentStatus } from "@/lib/db/student-classes"
+import { friendlyError } from "@/lib/util/friendly-error"
+import { getStudentDetail, type AdminStudentDetail } from "@/lib/db/students"
+import { inviteUserSchema } from "@/lib/validators/invite-user"
 
 export type EnrollResult = { ok: true } | { error: string }
 export type PaymentResult = { ok: true } | { error: string }
 export type NoteResult = { ok: true } | { error: string }
 export type InviteResult = { ok: true; userId: string } | { error: string }
+export type StudentDetailResult =
+  | { ok: true; detail: AdminStudentDetail }
+  | { error: string }
 
 export type InvitableRole = "student" | "industry_user"
 
 const NOTE_MAX_LENGTH = 5000
 
-// Conservative email check — Supabase will do its own validation; this just
-// catches the obvious typo case before an admin call.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// Lazy-load enrollments + notes when the side panel opens. Slim list view
+// avoids fetching this for every row up front.
+export async function loadStudentDetail(
+  profileId: string,
+): Promise<StudentDetailResult> {
+  if (!profileId) return { error: "Missing student id" }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "admin") return { error: "Forbidden" }
+
+  try {
+    const detail = await getStudentDetail(profileId)
+    return { ok: true, detail }
+  } catch (e) {
+    return {
+      error: friendlyError(
+        e as { message: string; code?: string },
+        "Could not load student detail",
+      ),
+    }
+  }
+}
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -38,19 +63,28 @@ export async function enrollStudentInSection(
     .select("price_cents, classes ( default_price_cents )")
     .eq("id", classSectionId)
     .single()
-  if (sectionError) return { error: sectionError.message }
+  if (sectionError) return { error: friendlyError(sectionError) }
   if (!section) return { error: "Section not found" }
 
   const cls = (() => {
     const raw = (section as { classes: unknown }).classes
     if (!raw) return null
-    if (Array.isArray(raw)) return raw[0] as { default_price_cents: number } | null
-    return raw as { default_price_cents: number }
+    if (Array.isArray(raw))
+      return raw[0] as { default_price_cents: number | null } | null
+    return raw as { default_price_cents: number | null }
   })()
+  const sectionPrice = section.price_cents
+  const classDefault = cls?.default_price_cents
+  // If neither price is set, refuse to enroll — silently flipping the row to
+  // payment_status='paid' would let a misconfigured section give a free pass.
+  if (
+    (sectionPrice === null || sectionPrice === undefined) &&
+    (classDefault === null || classDefault === undefined)
+  ) {
+    return { error: "Section has no price configured" }
+  }
   const price =
-    typeof section.price_cents === "number"
-      ? section.price_cents
-      : cls?.default_price_cents ?? 0
+    typeof sectionPrice === "number" ? sectionPrice : classDefault ?? 0
 
   const { error } = await supabase.from("student_classes").insert({
     profile_id: profileId,
@@ -64,7 +98,7 @@ export async function enrollStudentInSection(
     if (error.code === "23505") {
       return { error: "Student is already enrolled in this section" }
     }
-    return { error: error.message }
+    return { error: friendlyError(error) }
   }
 
   revalidatePath("/admin")
@@ -89,29 +123,18 @@ export async function recordPayment(
   if (me.role !== "admin") return { error: "Forbidden" }
 
   const supabase = await createClient()
-
-  const { data: row, error: readError } = await supabase
-    .from("student_classes")
-    .select("amount_paid_cents, outstanding_cents")
-    .eq("id", enrollmentId)
-    .single()
-  if (readError) return { error: readError.message }
-  if (!row) return { error: "Enrollment not found" }
-
-  const newPaid = row.amount_paid_cents + amountCents
-  const newOutstanding = Math.max(0, row.outstanding_cents - amountCents)
-  const newStatus: PaymentStatus =
-    newOutstanding === 0 ? "paid" : newPaid > 0 ? "partial" : "unpaid"
-
-  const { error } = await supabase
-    .from("student_classes")
-    .update({
-      amount_paid_cents: newPaid,
-      outstanding_cents: newOutstanding,
-      payment_status: newStatus,
-    })
-    .eq("id", enrollmentId)
-  if (error) return { error: error.message }
+  // Atomic update via SECURITY DEFINER RPC — avoids the read-modify-write
+  // race that two concurrent payments would lose to (migration 0010).
+  const { error } = await supabase.rpc("record_payment", {
+    p_enrollment_id: enrollmentId,
+    p_amount_cents: amountCents,
+  })
+  if (error) {
+    if (/enrollment not found/i.test(error.message)) {
+      return { error: "Enrollment not found" }
+    }
+    return { error: friendlyError(error) }
+  }
 
   revalidatePath("/admin")
   return { ok: true }
@@ -138,7 +161,7 @@ export async function addStudentNote(
     author_id: me.id,
     body: trimmed,
   })
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/admin")
   return { ok: true }
@@ -149,23 +172,28 @@ export async function inviteUser(input: {
   fullName: string
   role: InvitableRole
 }): Promise<InviteResult> {
-  const email = input.email.trim().toLowerCase()
-  const fullName = input.fullName.trim()
-  const role = input.role
-
-  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email" }
-  if (fullName.length > 200) {
-    return { error: "Name can’t exceed 200 characters" }
+  const parsed = inviteUserSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
-  if (role !== "student" && role !== "industry_user") {
-    return { error: "Invalid role" }
-  }
+  const { email, fullName, role } = parsed.data
 
   const me = await getCurrentUser()
   if (!me) return { error: "Not signed in" }
   if (me.role !== "admin") return { error: "Forbidden" }
 
   const admin = createAdminClient()
+
+  // Pre-check email collision before issuing the invite — avoids the orphan
+  // auth.users row we'd otherwise have to clean up on profile-insert failure.
+  const { data: existing, error: existingError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle()
+  if (existingError) return { error: friendlyError(existingError) }
+  if (existing) return { error: "A user with that email already exists" }
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
@@ -176,7 +204,7 @@ export async function inviteUser(input: {
       data: { full_name: fullName || null },
     },
   )
-  if (inviteError) return { error: inviteError.message }
+  if (inviteError) return { error: friendlyError(inviteError) }
 
   const userId = data.user?.id
   if (!userId) return { error: "Invite returned no user id" }
@@ -191,11 +219,12 @@ export async function inviteUser(input: {
   })
 
   if (profileError) {
-    // Best-effort rollback: don't leave an orphaned auth user. Ignore
-    // delete failures — the auth user can be cleaned up via the admin
-    // dashboard if needed.
-    await admin.auth.admin.deleteUser(userId).catch(() => undefined)
-    return { error: `Profile insert failed: ${profileError.message}` }
+    // Best-effort rollback: don't leave an orphaned auth user. Log if the
+    // cleanup itself fails so an operator can finish it manually.
+    await admin.auth.admin.deleteUser(userId).catch((rollbackError) => {
+      console.error("invite rollback failed", { userId, error: rollbackError })
+    })
+    return { error: friendlyError(profileError, "Could not finish creating the user") }
   }
 
   revalidatePath("/admin")

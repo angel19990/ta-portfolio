@@ -7,6 +7,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Skip Next internals, common static assets, fonts, and source maps so the
+    // middleware (auth check) only fires for actual page navigations + actions.
+    "/((?!_next/static|_next/image|favicon.ico|robots\\.txt|sitemap\\.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|css|js|woff2?|ttf|map)$).*)",
   ],
 };

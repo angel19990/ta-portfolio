@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache"
 
 import { getCurrentUser } from "@/lib/auth/get-user"
 import { createClient } from "@/lib/supabase/server"
+import { friendlyError } from "@/lib/util/friendly-error"
 import type { CastingCallStatus } from "@/lib/db/casting-calls"
 import {
   castingCallSchema,
@@ -72,10 +73,14 @@ export async function createCastingCall(
     .select("id")
     .single()
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
   if (!data) return { error: "Insert returned no row" }
 
   revalidatePath("/industry/casting-calls")
+  if (status === "open") {
+    // A newly-published open call should appear on the student browse page.
+    revalidatePath("/student/casting-calls")
+  }
   return { ok: true, id: data.id }
 }
 
@@ -119,11 +124,16 @@ export async function updateCastingCall(
     })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/industry/casting-calls")
   revalidatePath(`/industry/casting-calls/${id}`)
   revalidatePath(`/industry/casting-calls/${id}/edit`)
+  // Title / deadline / status changes are visible to students on these
+  // routes — invalidate them too so the next render reads fresh data.
+  revalidatePath("/student/casting-calls")
+  revalidatePath(`/student/casting-calls/${id}`)
+  revalidatePath("/student/applications")
   return { ok: true, id }
 }
 
@@ -149,13 +159,14 @@ export async function setApplicationStatus(
   const supabase = await createClient()
 
   // Block transitions out of 'withdrawn' (student-driven terminal state).
-  // RLS doesn't gate by current status, so enforce here.
+  // The 0008 trigger also enforces this, but the action-level message reads
+  // better than the trigger raise.
   const { data: existing, error: readError } = await supabase
     .from("casting_applications")
     .select("status")
     .eq("id", applicationId)
     .maybeSingle()
-  if (readError) return { error: readError.message }
+  if (readError) return { error: friendlyError(readError) }
   if (!existing) return { error: "Application not found" }
   if (existing.status === "withdrawn") {
     return { error: "Withdrawn applications can't be reassigned." }
@@ -168,9 +179,11 @@ export async function setApplicationStatus(
     .update({ status: newStatus })
     .eq("id", applicationId)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath(`/industry/casting-calls/${callId}`)
+  // Student-facing applications page renders this status — keep it in sync.
+  revalidatePath("/student/applications")
   return { ok: true }
 }
 
@@ -193,9 +206,15 @@ export async function setCastingCallStatus(
     .update({ status })
     .eq("id", id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error) }
 
   revalidatePath("/industry/casting-calls")
   revalidatePath(`/industry/casting-calls/${id}`)
+  // Admin moderation list also displays the call status.
+  revalidatePath("/admin/casting-calls")
+  // Status changes affect what students see — bust their caches too.
+  revalidatePath("/student/casting-calls")
+  revalidatePath(`/student/casting-calls/${id}`)
+  revalidatePath("/student/applications")
   return { ok: true }
 }

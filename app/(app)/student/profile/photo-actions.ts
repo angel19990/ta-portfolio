@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import {
+  expectedFormatForMime,
+  verifyMagicBytes,
+} from "@/lib/util/file-magic"
+import { friendlyError } from "@/lib/util/friendly-error"
+import { pathFromPublicUrl } from "@/lib/util/storage-image"
 
 export type PhotoActionResult =
   | { ok: true; url?: string }
@@ -31,6 +37,10 @@ export async function addPhoto(
   if (!ALLOWED_MIME.has(file.type)) {
     return { error: "File must be JPEG, PNG, or WebP" }
   }
+  const format = expectedFormatForMime(file.type)
+  if (!format || !(await verifyMagicBytes(file, format))) {
+    return { error: "File contents don't match its declared type" }
+  }
 
   const supabase = await createClient()
   const {
@@ -44,7 +54,7 @@ export async function addPhoto(
     .select("id")
     .eq("profile_id", user.id)
     .maybeSingle()
-  if (actorErr) return { error: actorErr.message }
+  if (actorErr) return { error: friendlyError(actorErr) }
   if (!actor) {
     return { error: "Save your profile details first, then add photos." }
   }
@@ -55,7 +65,7 @@ export async function addPhoto(
   const { error: uploadError } = await supabase.storage
     .from("photos")
     .upload(path, file, { contentType: file.type, upsert: false })
-  if (uploadError) return { error: uploadError.message }
+  if (uploadError) return { error: friendlyError(uploadError) }
 
   const { data: pub } = supabase.storage.from("photos").getPublicUrl(path)
   const url = pub.publicUrl
@@ -70,7 +80,7 @@ export async function addPhoto(
     if (insertError.message.includes("limit (6)")) {
       return { error: `You can have at most ${PHOTO_LIMIT} photos. Delete one first.` }
     }
-    return { error: insertError.message }
+    return { error: friendlyError(insertError) }
   }
 
   revalidatePath("/student/profile")
@@ -92,20 +102,17 @@ export async function deletePhoto(photoId: string): Promise<PhotoActionResult> {
     .select("url")
     .eq("id", photoId)
     .maybeSingle()
-  if (fetchErr) return { error: fetchErr.message }
+  if (fetchErr) return { error: friendlyError(fetchErr) }
   if (!row) return { error: "Photo not found" }
 
-  // URL → path: everything after "/photos/" is the object path.
-  const marker = "/photos/"
-  const idx = row.url.indexOf(marker)
-  const path = idx >= 0 ? row.url.slice(idx + marker.length) : null
+  const path = pathFromPublicUrl("photos", row.url)
 
   // Delete the DB row first — RLS enforces ownership.
   const { error: dbErr } = await supabase
     .from("actor_photos")
     .delete()
     .eq("id", photoId)
-  if (dbErr) return { error: dbErr.message }
+  if (dbErr) return { error: friendlyError(dbErr) }
 
   // Best-effort storage cleanup.
   if (path) {

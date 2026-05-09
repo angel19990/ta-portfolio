@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 
@@ -32,6 +32,16 @@ function localEndOfDayISO(dateStr: string): string {
   const [y, m, d] = dateStr.split("-").map(Number)
   return new Date(y, m - 1, d, 23, 59, 59, 999).toISOString()
 }
+
+function todayISODate(): string {
+  const d = new Date()
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, "0")
+  const day = String(d.getDate()).padStart(2, "0")
+  return `${y}-${m}-${day}`
+}
+
+const MAX_DATE = "2099-12-31"
 
 type FormProps = { initialValues: CastingCallInput } & (
   | { mode: "create" }
@@ -100,6 +110,9 @@ export function CastingCallForm(props: FormProps) {
     form.handleSubmit((values) => doSubmit(values, status))
 
   const submitting = form.formState.isSubmitting
+  const today = todayISODate()
+  // useWatch is compiler-safe (vs form.watch which trips a React Compiler skip).
+  const shootStartValue = useWatch({ control: form.control, name: "shoot_start" })
 
   return (
     <Form {...form}>
@@ -210,7 +223,13 @@ export function CastingCallForm(props: FormProps) {
               <FormItem>
                 <FormLabel>Shoot start</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="date"
+                    min={today}
+                    max={MAX_DATE}
+                    placeholder="YYYY-MM-DD"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -223,7 +242,13 @@ export function CastingCallForm(props: FormProps) {
               <FormItem>
                 <FormLabel>Shoot end</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="date"
+                    min={shootStartValue || today}
+                    max={MAX_DATE}
+                    placeholder="YYYY-MM-DD"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -236,7 +261,13 @@ export function CastingCallForm(props: FormProps) {
               <FormItem>
                 <FormLabel>Application deadline</FormLabel>
                 <FormControl>
-                  <Input type="date" {...field} />
+                  <Input
+                    type="date"
+                    min={today}
+                    max={MAX_DATE}
+                    placeholder="YYYY-MM-DD"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -273,11 +304,9 @@ export function CastingCallForm(props: FormProps) {
               >
                 Save as draft
               </Button>
-              <Button
-                type="button"
-                disabled={submitting}
-                onClick={submitWith("open")}
-              >
+              {/* type="submit" so Enter inside an input also fires this path
+                  (the form's onSubmit is wired to submitWith('open') above). */}
+              <Button type="submit" disabled={submitting}>
                 {mode === "create"
                   ? submitting
                     ? "Posting…"

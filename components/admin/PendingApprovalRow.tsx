@@ -1,12 +1,12 @@
 "use client"
 
-import { useTransition } from "react"
 import Image from "next/image"
-import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { approveActor } from "@/app/(app)/admin/approvals/actions"
+import { transformedImage } from "@/lib/util/storage-image"
 
 type Props = {
   id: string
@@ -25,7 +25,6 @@ export function PendingApprovalRow({
   bio,
   location,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   function onApprove() {
@@ -36,7 +35,6 @@ export function PendingApprovalRow({
         return
       }
       toast.success(`Approved ${fullName ?? email}`)
-      router.refresh()
     })
   }
 
@@ -45,7 +43,7 @@ export function PendingApprovalRow({
       <div className="relative size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
         {headshotUrl ? (
           <Image
-            src={headshotUrl}
+            src={transformedImage(headshotUrl, { width: 160 })!}
             alt={fullName ?? email}
             fill
             sizes="64px"

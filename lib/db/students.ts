@@ -21,6 +21,9 @@ export type AdminStudentActor = {
   age: number | null
 }
 
+// List shape — slim, no enrollments/notes (those are lazy-loaded in the side
+// panel). At ≥100 students with eager embeds, /admin's payload bloated even
+// though the panel only renders detail for the *selected* row.
 export type AdminStudent = {
   id: string
   email: string
@@ -28,9 +31,13 @@ export type AdminStudent = {
   is_active: boolean
   created_at: string
   actor_profile: AdminStudentActor | null
+  status: StudentStatus
+}
+
+// Detail shape returned by getStudentDetail — only fetched on side-panel open.
+export type AdminStudentDetail = {
   enrollments: EnrollmentRow[]
   notes: StudentNote[]
-  status: StudentStatus
 }
 
 // 1:1 embed normalizer: PostgREST may return either an object or a 1-element array.
@@ -124,31 +131,12 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
           location,
           skills,
           age
-        ),
-        student_classes (
-          id,
-          status,
-          payment_status,
-          amount_paid_cents,
-          outstanding_cents,
-          enrolled_at,
-          class_sections (
-            id,
-            section_code,
-            term,
-            classes ( name, code )
-          )
-        ),
-        student_notes!profile_id (
-          id,
-          body,
-          created_at,
-          author:author_id ( id, full_name )
         )
       `,
     )
     .eq("role", "student")
     .order("created_at", { ascending: false })
+    .limit(200)
 
   if (error) throw error
   if (!data) return []
@@ -157,17 +145,6 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
     const actorProfile = singleEmbed<AdminStudentActor>(
       (row as { actor_profiles: unknown }).actor_profiles,
     )
-    const rawEnrollments = (row as { student_classes: unknown })
-      .student_classes
-    const enrollments: EnrollmentRow[] = Array.isArray(rawEnrollments)
-      ? rawEnrollments.map((e) => mapEnrollment(e as RawEnrollment))
-      : []
-    const rawNotes = (row as { student_notes: unknown }).student_notes
-    const notes: StudentNote[] = Array.isArray(rawNotes)
-      ? rawNotes
-          .map((n) => mapNote(n as RawNote))
-          .sort((a, b) => b.created_at.localeCompare(a.created_at))
-      : []
 
     let status: StudentStatus
     if (!row.is_active) status = "inactive"
@@ -187,9 +164,60 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
       is_active: row.is_active,
       created_at: row.created_at,
       actor_profile: actorProfile,
-      enrollments,
-      notes,
       status,
     }
   })
+}
+
+// On-demand detail fetch — fired when the side panel opens, not on the list.
+export async function getStudentDetail(
+  profileId: string,
+): Promise<AdminStudentDetail> {
+  const supabase = await createClient()
+  const [enrollmentsResult, notesResult] = await Promise.all([
+    supabase
+      .from("student_classes")
+      .select(
+        `
+          id,
+          status,
+          payment_status,
+          amount_paid_cents,
+          outstanding_cents,
+          enrolled_at,
+          class_sections (
+            id,
+            section_code,
+            term,
+            classes ( name, code )
+          )
+        `,
+      )
+      .eq("profile_id", profileId)
+      .order("enrolled_at", { ascending: false }),
+    supabase
+      .from("student_notes")
+      .select(
+        `
+          id,
+          body,
+          created_at,
+          author:author_id ( id, full_name )
+        `,
+      )
+      .eq("profile_id", profileId)
+      .order("created_at", { ascending: false }),
+  ])
+
+  if (enrollmentsResult.error) throw enrollmentsResult.error
+  if (notesResult.error) throw notesResult.error
+
+  const enrollments: EnrollmentRow[] = (enrollmentsResult.data ?? []).map((e) =>
+    mapEnrollment(e as RawEnrollment),
+  )
+  const notes: StudentNote[] = (notesResult.data ?? []).map((n) =>
+    mapNote(n as RawNote),
+  )
+
+  return { enrollments, notes }
 }

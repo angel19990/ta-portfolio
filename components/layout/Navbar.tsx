@@ -42,30 +42,34 @@ export async function Navbar() {
 
   return (
     <header className="border-b bg-background">
-      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
-        <Link href={user ? roleHome(user.role) : "/"} className="flex items-center gap-2">
-          <span className="text-base font-semibold tracking-tight">
-            Truthful Acting Studios
-          </span>
-        </Link>
+      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="flex items-center gap-2">
+          {user ? <MobileNav items={ROLE_NAV[user.role]} /> : null}
+          <Link
+            href={user ? roleHome(user.role) : "/"}
+            className="flex items-center gap-2"
+          >
+            <span className="text-base font-semibold tracking-tight">
+              Truthful Acting Studios
+            </span>
+          </Link>
+        </div>
 
         {user ? (
-          <>
-            <nav className="hidden items-center gap-6 md:flex">
-              {ROLE_NAV[user.role].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-            <div className="md:hidden">
-              <MobileNav items={ROLE_NAV[user.role]} signOut={signOut} />
-            </div>
-          </>
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-6 md:flex"
+          >
+            {ROLE_NAV[user.role].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
@@ -90,10 +94,10 @@ export async function Navbar() {
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" size="sm" />}
-              aria-label="User menu"
+              render={<Button variant="ghost" className="size-9 p-0" />}
+              aria-label={`Account: ${user.fullName ?? user.email}`}
             >
-              <Avatar className="size-7">
+              <Avatar className="size-8">
                 <AvatarFallback className="text-xs">
                   {initials(user.fullName ?? user.email)}
                 </AvatarFallback>

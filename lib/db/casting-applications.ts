@@ -17,15 +17,25 @@ export type MyApplicationRow = {
   call: CastingCallRow | null
 }
 
-export async function getMyApplicationForCall(callId: string): Promise<{
+// userId can be passed by callers that already resolved the current user
+// (e.g. from `requireRole`) — saves a redundant auth.getUser() round-trip
+// when this is called on a page that just authenticated.
+export async function getMyApplicationForCall(
+  callId: string,
+  userId?: string,
+): Promise<{
   id: string
   status: ApplicationStatus
 } | null> {
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return null
+  let resolvedId = userId
+  if (!resolvedId) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return null
+    resolvedId = user.id
+  }
 
   // Embed actor_profile to filter to current user (RLS already does this,
   // but the embed is necessary because casting_applications has no profile_id).
@@ -33,7 +43,7 @@ export async function getMyApplicationForCall(callId: string): Promise<{
     .from("casting_applications")
     .select("id, status, actor_profiles!inner(profile_id)")
     .eq("casting_call_id", callId)
-    .eq("actor_profiles.profile_id", user.id)
+    .eq("actor_profiles.profile_id", resolvedId)
     .maybeSingle()
 
   if (error) throw error
@@ -79,6 +89,7 @@ export async function listApplicantsForCall(
     )
     .eq("casting_call_id", callId)
     .order("created_at", { ascending: false })
+    .limit(200)
 
   if (error) throw error
   if (!data) return []
@@ -144,6 +155,7 @@ export async function listMyApplicationsWithCalls(): Promise<
     )
     .eq("actor_profiles.profile_id", user.id)
     .order("created_at", { ascending: false })
+    .limit(50)
 
   if (error) throw error
   if (!data) return []
