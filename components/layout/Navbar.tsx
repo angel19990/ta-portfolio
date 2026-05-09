@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { MobileNav } from "@/components/layout/MobileNav";
 
 const ROLE_NAV: Record<AppRole, { label: string; href: string }[]> = {
   student: [
@@ -49,17 +50,22 @@ export async function Navbar() {
         </Link>
 
         {user ? (
-          <nav className="hidden items-center gap-6 md:flex">
-            {ROLE_NAV[user.role].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <>
+            <nav className="hidden items-center gap-6 md:flex">
+              {ROLE_NAV[user.role].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+            <div className="md:hidden">
+              <MobileNav items={ROLE_NAV[user.role]} signOut={signOut} />
+            </div>
+          </>
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>

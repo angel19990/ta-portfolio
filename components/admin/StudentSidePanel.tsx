@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -92,13 +93,14 @@ export function StudentSidePanel({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="border-b">
           <div className="flex items-start gap-3">
-            <div className="size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
+            <div className="relative size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
               {actor?.headshot_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={actor.headshot_url}
                   alt={displayName}
-                  className="size-full object-cover"
+                  fill
+                  sizes="56px"
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">

@@ -30,8 +30,8 @@ export default async function AdminApprovalsPage() {
         description="Public profiles waiting on admin approval before they appear to industry users."
       />
       {pending.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          Nothing pending. All public profiles are approved.
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No pending approvals.
         </div>
       ) : (
         <ul className="space-y-3">

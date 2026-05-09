@@ -53,10 +53,10 @@ export default async function IndustryTalentPage({
       <div className="space-y-6">
         <SearchBar defaultValue={query} />
         {filtered.length === 0 ? (
-          <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+          <div className="py-12 text-center text-sm text-muted-foreground">
             {query
               ? `No actors match "${query}". Try a different search.`
-              : "No approved actors yet."}
+              : "No approved talent yet"}
           </div>
         ) : (
           <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">

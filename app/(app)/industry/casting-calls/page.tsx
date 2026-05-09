@@ -53,8 +53,8 @@ export default async function IndustryCastingCallsPage() {
         }
       />
       {calls.length === 0 ? (
-        <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-          You haven&apos;t posted a call yet.
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          No casting calls yet. Create your first one.
         </div>
       ) : (
         <ul className="divide-y rounded-lg border">
@@ -62,7 +62,7 @@ export default async function IndustryCastingCallsPage() {
             <li key={c.id}>
               <Link
                 href={`/industry/casting-calls/${c.id}`}
-                className="flex items-center justify-between gap-4 p-4 hover:bg-muted/50"
+                className="flex items-center justify-between gap-4 p-4 outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

@@ -1,6 +1,7 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
+import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -58,13 +59,14 @@ export function HeadshotUpload({ currentUrl }: Props) {
 
   return (
     <div className="flex items-start gap-4 rounded-lg border p-4">
-      <div className="size-24 shrink-0 overflow-hidden rounded-md border bg-muted">
+      <div className="relative size-24 shrink-0 overflow-hidden rounded-md border bg-muted">
         {currentUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={currentUrl}
             alt="Headshot"
-            className="size-full object-cover"
+            fill
+            sizes="96px"
+            className="object-cover"
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">

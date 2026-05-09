@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Image from "next/image"
 
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -156,13 +157,14 @@ export function StudentTable({ students, sections }: Props) {
                   )}
                 >
                   <TableCell>
-                    <div className="size-8 overflow-hidden rounded-full border bg-muted">
+                    <div className="relative size-8 overflow-hidden rounded-full border bg-muted">
                       {s.actor_profile?.headshot_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={s.actor_profile.headshot_url}
                           alt={s.full_name ?? s.email}
-                          className="size-full object-cover"
+                          fill
+                          sizes="32px"
+                          className="object-cover"
                         />
                       ) : null}
                     </div>
