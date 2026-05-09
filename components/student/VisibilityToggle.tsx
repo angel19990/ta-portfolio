@@ -1,10 +1,10 @@
 "use client"
 
-import { useTransition } from "react"
+import { useId, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { Switch } from "@/components/ui/switch"
 import { setVisibility } from "@/app/(app)/student/profile/visibility-actions"
 
 type Props = {
@@ -15,6 +15,7 @@ type Props = {
 export function VisibilityToggle({ visibility, approvedAt }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const id = useId()
 
   const isPublic = visibility === "public"
   const isApproved = !!approvedAt
@@ -26,15 +27,15 @@ export function VisibilityToggle({ visibility, approvedAt }: Props) {
       ? { label: "Public, awaiting admin approval", tone: "text-muted-foreground" }
       : { label: "Private — only you and admin can see this", tone: "text-muted-foreground" }
 
-  function onToggle() {
-    const next = isPublic ? "private" : "public"
+  function onCheckedChange(next: boolean) {
+    const nextVisibility = next ? "public" : "private"
     startTransition(async () => {
-      const result = await setVisibility(next)
+      const result = await setVisibility(nextVisibility)
       if ("error" in result) {
         toast.error(result.error)
         return
       }
-      toast.success(next === "public" ? "Set to public" : "Set to private")
+      toast.success(next ? "Set to public" : "Set to private")
       router.refresh()
     })
   }
@@ -42,18 +43,18 @@ export function VisibilityToggle({ visibility, approvedAt }: Props) {
   return (
     <div className="flex items-center justify-between rounded-lg border p-4">
       <div className="space-y-1">
-        <p className="text-sm font-medium">Profile visibility</p>
+        <label htmlFor={id} className="text-sm font-medium cursor-pointer">
+          Profile visibility
+        </label>
         <p className={`text-xs ${industryStatus.tone}`}>{industryStatus.label}</p>
       </div>
-      <Button
-        type="button"
-        variant={isPublic ? "outline" : "default"}
-        size="sm"
-        onClick={onToggle}
+      <Switch
+        id={id}
+        checked={isPublic}
+        onCheckedChange={onCheckedChange}
         disabled={isPending}
-      >
-        {isPending ? "Saving…" : isPublic ? "Make private" : "Make public"}
-      </Button>
+        aria-label="Make profile public"
+      />
     </div>
   )
 }
