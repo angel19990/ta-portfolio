@@ -6,17 +6,44 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
 import { friendlyError } from "@/lib/util/friendly-error"
-import type { PaymentStatus } from "@/lib/db/student-classes"
+import { getStudentDetail, type AdminStudentDetail } from "@/lib/db/students"
 import { inviteUserSchema } from "@/lib/validators/invite-user"
 
 export type EnrollResult = { ok: true } | { error: string }
 export type PaymentResult = { ok: true } | { error: string }
 export type NoteResult = { ok: true } | { error: string }
 export type InviteResult = { ok: true; userId: string } | { error: string }
+export type StudentDetailResult =
+  | { ok: true; detail: AdminStudentDetail }
+  | { error: string }
 
 export type InvitableRole = "student" | "industry_user"
 
 const NOTE_MAX_LENGTH = 5000
+
+// Lazy-load enrollments + notes when the side panel opens. Slim list view
+// avoids fetching this for every row up front.
+export async function loadStudentDetail(
+  profileId: string,
+): Promise<StudentDetailResult> {
+  if (!profileId) return { error: "Missing student id" }
+
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "admin") return { error: "Forbidden" }
+
+  try {
+    const detail = await getStudentDetail(profileId)
+    return { ok: true, detail }
+  } catch (e) {
+    return {
+      error: friendlyError(
+        e as { message: string; code?: string },
+        "Could not load student detail",
+      ),
+    }
+  }
+}
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -96,29 +123,18 @@ export async function recordPayment(
   if (me.role !== "admin") return { error: "Forbidden" }
 
   const supabase = await createClient()
-
-  const { data: row, error: readError } = await supabase
-    .from("student_classes")
-    .select("amount_paid_cents, outstanding_cents")
-    .eq("id", enrollmentId)
-    .single()
-  if (readError) return { error: friendlyError(readError) }
-  if (!row) return { error: "Enrollment not found" }
-
-  const newPaid = row.amount_paid_cents + amountCents
-  const newOutstanding = Math.max(0, row.outstanding_cents - amountCents)
-  const newStatus: PaymentStatus =
-    newOutstanding === 0 ? "paid" : newPaid > 0 ? "partial" : "unpaid"
-
-  const { error } = await supabase
-    .from("student_classes")
-    .update({
-      amount_paid_cents: newPaid,
-      outstanding_cents: newOutstanding,
-      payment_status: newStatus,
-    })
-    .eq("id", enrollmentId)
-  if (error) return { error: friendlyError(error) }
+  // Atomic update via SECURITY DEFINER RPC — avoids the read-modify-write
+  // race that two concurrent payments would lose to (migration 0010).
+  const { error } = await supabase.rpc("record_payment", {
+    p_enrollment_id: enrollmentId,
+    p_amount_cents: amountCents,
+  })
+  if (error) {
+    if (/enrollment not found/i.test(error.message)) {
+      return { error: "Enrollment not found" }
+    }
+    return { error: friendlyError(error) }
+  }
 
   revalidatePath("/admin")
   return { ok: true }

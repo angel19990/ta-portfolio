@@ -21,3 +21,22 @@ export function transformedImage(
   const quality = opts.quality ?? 80
   return `${transformed}${sep}width=${opts.width}&quality=${quality}`
 }
+
+// Extract the storage object path (e.g. "<uid>/headshot-<ts>.jpg") from a
+// public storage URL like
+//   https://<ref>.supabase.co/storage/v1/object/public/<bucket>/<path>?…
+// Used by the upload actions to clean up an old object after replacing it,
+// or by deletePhoto to derive the storage path from the stored URL.
+export function pathFromPublicUrl(
+  bucket: string,
+  url: string | null | undefined,
+): string | null {
+  if (!url) return null
+  const marker = `${RAW_PREFIX}${bucket}/`
+  const idx = url.indexOf(marker)
+  if (idx < 0) return null
+  const tail = url.slice(idx + marker.length)
+  // Drop any query string (image transform URLs may include ?width=…).
+  const q = tail.indexOf("?")
+  return q >= 0 ? tail.slice(0, q) : tail
+}

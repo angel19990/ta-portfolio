@@ -35,6 +35,15 @@ export async function uploadResume(
   } = await supabase.auth.getUser()
   if (!user) return { error: "Not signed in" }
 
+  // Read previous resume path so we can clean it up after a successful replace.
+  // resume_url stores the storage path directly (not a URL), so no URL parsing.
+  const { data: existing } = await supabase
+    .from("actor_profiles")
+    .select("resume_url")
+    .eq("profile_id", user.id)
+    .maybeSingle()
+  const previousPath = existing?.resume_url ?? null
+
   const path = `${user.id}/resume-${Date.now()}.pdf`
 
   const { error: uploadError } = await supabase.storage
@@ -49,7 +58,14 @@ export async function uploadResume(
       { profile_id: user.id, resume_url: path },
       { onConflict: "profile_id" },
     )
-  if (dbError) return { error: friendlyError(dbError) }
+  if (dbError) {
+    await supabase.storage.from("resumes").remove([path])
+    return { error: friendlyError(dbError) }
+  }
+
+  if (previousPath && previousPath !== path) {
+    await supabase.storage.from("resumes").remove([previousPath])
+  }
 
   revalidatePath("/student/profile")
   return { ok: true }

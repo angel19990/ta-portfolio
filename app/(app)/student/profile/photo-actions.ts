@@ -8,6 +8,7 @@ import {
   verifyMagicBytes,
 } from "@/lib/util/file-magic"
 import { friendlyError } from "@/lib/util/friendly-error"
+import { pathFromPublicUrl } from "@/lib/util/storage-image"
 
 export type PhotoActionResult =
   | { ok: true; url?: string }
@@ -104,10 +105,7 @@ export async function deletePhoto(photoId: string): Promise<PhotoActionResult> {
   if (fetchErr) return { error: friendlyError(fetchErr) }
   if (!row) return { error: "Photo not found" }
 
-  // URL → path: everything after "/photos/" is the object path.
-  const marker = "/photos/"
-  const idx = row.url.indexOf(marker)
-  const path = idx >= 0 ? row.url.slice(idx + marker.length) : null
+  const path = pathFromPublicUrl("photos", row.url)
 
   // Delete the DB row first — RLS enforces ownership.
   const { error: dbErr } = await supabase
