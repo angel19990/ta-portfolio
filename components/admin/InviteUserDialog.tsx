@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import {
@@ -15,6 +14,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { inviteUser, type InvitableRole } from "@/app/(app)/admin/students/actions"
 
 type Props = {
@@ -23,7 +29,6 @@ type Props = {
 }
 
 export function InviteUserDialog({ open, onOpenChange }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [email, setEmail] = useState("")
   const [fullName, setFullName] = useState("")
@@ -46,7 +51,6 @@ export function InviteUserDialog({ open, onOpenChange }: Props) {
       toast.success(`Invite sent to ${email}`)
       reset()
       onOpenChange(false)
-      router.refresh()
     })
   }
 
@@ -91,16 +95,22 @@ export function InviteUserDialog({ open, onOpenChange }: Props) {
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="invite-role">Role</Label>
-            <select
-              id="invite-role"
+            <Select
               value={role}
-              onChange={(e) => setRole(e.target.value as InvitableRole)}
-              required
-              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              onValueChange={(next) => {
+                if (next === "student" || next === "industry_user") {
+                  setRole(next)
+                }
+              }}
             >
-              <option value="student">Student</option>
-              <option value="industry_user">Industry user</option>
-            </select>
+              <SelectTrigger id="invite-role" className="w-full">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="student">Student</SelectItem>
+                <SelectItem value="industry_user">Industry user</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
               Admin invites go through the seed-admin script.
             </p>

@@ -1,14 +1,12 @@
 "use client"
 
 import { useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { applyToCastingCall } from "@/app/(app)/student/casting-calls/actions"
 import { Button } from "@/components/ui/button"
 
 export function ApplyButton({ callId }: { callId: string }) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
 
   function onApply() {
@@ -19,7 +17,6 @@ export function ApplyButton({ callId }: { callId: string }) {
         return
       }
       toast.success("Application submitted")
-      router.refresh()
     })
   }
 

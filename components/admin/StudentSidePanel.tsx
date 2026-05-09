@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import {
@@ -55,7 +54,6 @@ export function StudentSidePanel({
   open,
   onOpenChange,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [addClassOpen, setAddClassOpen] = useState(false)
   const [paymentEnrollmentId, setPaymentEnrollmentId] = useState<string | null>(
@@ -85,7 +83,6 @@ export function StudentSidePanel({
         return
       }
       toast.success(`Approved ${displayName}`)
-      router.refresh()
     })
   }
 
@@ -280,7 +277,6 @@ function NotesThread({
   profileId: string
   notes: StudentNote[]
 }) {
-  const router = useRouter()
   const [body, setBody] = useState("")
   const [isPending, startTransition] = useTransition()
 
@@ -296,7 +292,6 @@ function NotesThread({
       }
       toast.success("Note added")
       setBody("")
-      router.refresh()
     })
   }
 

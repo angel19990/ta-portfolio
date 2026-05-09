@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import { useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -26,7 +25,6 @@ export function PendingApprovalRow({
   bio,
   location,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   function onApprove() {
@@ -37,7 +35,6 @@ export function PendingApprovalRow({
         return
       }
       toast.success(`Approved ${fullName ?? email}`)
-      router.refresh()
     })
   }
 

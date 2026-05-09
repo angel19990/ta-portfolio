@@ -3,7 +3,6 @@
 import * as React from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { saveTalentProfile } from "@/app/(app)/student/profile/actions"
@@ -35,7 +34,6 @@ export function TalentProfileForm({
 }: {
   initialValues: TalentProfileInput
 }) {
-  const router = useRouter()
   const [skillsInput, setSkillsInput] = React.useState(
     skillsToString(initialValues.skills),
   )
@@ -52,7 +50,6 @@ export function TalentProfileForm({
       return
     }
     toast.success("Profile saved")
-    router.refresh()
   }
 
   return (

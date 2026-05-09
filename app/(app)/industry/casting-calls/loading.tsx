@@ -1,8 +1,9 @@
+import { LoadingRegion } from "@/components/ui/loading-region";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function IndustryCastingCallsLoading() {
   return (
-    <>
+    <LoadingRegion>
       <div className="mb-6 flex items-start justify-between gap-4">
         <div className="space-y-2">
           <Skeleton className="h-7 w-56" />
@@ -25,6 +26,6 @@ export default function IndustryCastingCallsLoading() {
           </li>
         ))}
       </ul>
-    </>
+    </LoadingRegion>
   );
 }

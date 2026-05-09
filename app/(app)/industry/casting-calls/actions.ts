@@ -210,6 +210,8 @@ export async function setCastingCallStatus(
 
   revalidatePath("/industry/casting-calls")
   revalidatePath(`/industry/casting-calls/${id}`)
+  // Admin moderation list also displays the call status.
+  revalidatePath("/admin/casting-calls")
   // Status changes affect what students see — bust their caches too.
   revalidatePath("/student/casting-calls")
   revalidatePath(`/student/casting-calls/${id}`)

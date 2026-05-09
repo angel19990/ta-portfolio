@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -17,7 +16,6 @@ type Props = {
 const MAX_BYTES = 10 * 1024 * 1024
 
 export function ResumeUpload({ hasResume }: Props) {
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, startUpload] = useTransition()
@@ -55,7 +53,6 @@ export function ResumeUpload({ hasResume }: Props) {
       toast.success(hasResume ? "Resume replaced" : "Resume uploaded")
       setFile(null)
       if (inputRef.current) inputRef.current.value = ""
-      router.refresh()
     })
   }
 

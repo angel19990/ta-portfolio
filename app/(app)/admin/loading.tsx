@@ -1,8 +1,9 @@
+import { LoadingRegion } from "@/components/ui/loading-region";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AdminDashboardLoading() {
   return (
-    <>
+    <LoadingRegion>
       <div className="mb-6">
         <Skeleton className="h-7 w-48" />
       </div>
@@ -35,6 +36,6 @@ export default function AdminDashboardLoading() {
           ))}
         </div>
       </div>
-    </>
+    </LoadingRegion>
   );
 }

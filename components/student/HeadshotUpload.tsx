@@ -1,7 +1,6 @@
 "use client"
 
 import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -15,7 +14,6 @@ const MAX_BYTES = 5 * 1024 * 1024
 const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"]
 
 export function HeadshotUpload({ currentUrl }: Props) {
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -52,7 +50,6 @@ export function HeadshotUpload({ currentUrl }: Props) {
       toast.success("Headshot uploaded")
       setFile(null)
       if (inputRef.current) inputRef.current.value = ""
-      router.refresh()
     })
   }
 

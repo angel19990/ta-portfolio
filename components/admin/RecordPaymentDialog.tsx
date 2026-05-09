@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import {
@@ -34,7 +33,6 @@ export function RecordPaymentDialog({
   open,
   onOpenChange,
 }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [amount, setAmount] = useState("")
 
@@ -56,7 +54,6 @@ export function RecordPaymentDialog({
       toast.success(`Recorded ${formatCents(cents)} payment`)
       setAmount("")
       onOpenChange(false)
-      router.refresh()
     })
   }
 

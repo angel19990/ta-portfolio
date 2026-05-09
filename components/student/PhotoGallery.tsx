@@ -2,7 +2,6 @@
 
 import Image from "next/image"
 import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -23,7 +22,6 @@ const ALLOWED_MIME = ["image/jpeg", "image/png", "image/webp"]
 const PHOTO_LIMIT = 6
 
 export function PhotoGallery({ photos }: Props) {
-  const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [isUploading, startUpload] = useTransition()
@@ -63,7 +61,6 @@ export function PhotoGallery({ photos }: Props) {
       toast.success("Photo added")
       setFile(null)
       if (inputRef.current) inputRef.current.value = ""
-      router.refresh()
     })
   }
 
@@ -77,7 +74,6 @@ export function PhotoGallery({ photos }: Props) {
         return
       }
       toast.success("Photo removed")
-      router.refresh()
     })
   }
 

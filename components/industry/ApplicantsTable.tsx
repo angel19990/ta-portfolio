@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import { CircleCheck, CircleSlash } from "lucide-react"
 
 import { setApplicationStatus } from "@/app/(app)/industry/casting-calls/actions"
 import type {
@@ -53,7 +53,6 @@ export function ApplicantsTable({
   applicants: ApplicantRow[]
   callId: string
 }) {
-  const router = useRouter()
   const [pending, startTransition] = useTransition()
 
   function transition(
@@ -68,7 +67,6 @@ export function ApplicantsTable({
         return
       }
       toast.success(label)
-      router.refresh()
     })
   }
 
@@ -92,10 +90,9 @@ export function ApplicantsTable({
       </TableHeader>
       <TableBody>
         {applicants.map((a) => {
-          const dimmed = a.status === "withdrawn"
           const name = a.full_name ?? "Unnamed actor"
           return (
-            <TableRow key={a.application_id} className={dimmed ? "opacity-60" : undefined}>
+            <TableRow key={a.application_id}>
               <TableCell>
                 <div className="flex flex-col">
                   {a.approved && a.actor_profile_id ? (
@@ -116,7 +113,16 @@ export function ApplicantsTable({
                 </div>
               </TableCell>
               <TableCell>
-                <Badge variant={APP_STATUS_VARIANT[a.status]}>
+                <Badge
+                  variant={APP_STATUS_VARIANT[a.status]}
+                  className="gap-1"
+                >
+                  {a.status === "shortlisted" ? (
+                    <CircleCheck aria-hidden="true" className="size-3" />
+                  ) : null}
+                  {a.status === "withdrawn" || a.status === "rejected" ? (
+                    <CircleSlash aria-hidden="true" className="size-3" />
+                  ) : null}
                   {APP_STATUS_LABEL[a.status]}
                 </Badge>
               </TableCell>

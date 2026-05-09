@@ -1,7 +1,6 @@
 "use client"
 
 import { useTransition } from "react"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,6 @@ type Props = {
 }
 
 export function VisibilityToggle({ visibility, approvedAt }: Props) {
-  const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
   const isPublic = visibility === "public"
@@ -35,7 +33,6 @@ export function VisibilityToggle({ visibility, approvedAt }: Props) {
         return
       }
       toast.success(next === "public" ? "Set to public" : "Set to private")
-      router.refresh()
     })
   }
 

@@ -151,11 +151,7 @@ export function StudentTable({ students, sections }: Props) {
               filtered.map((s) => (
                 <TableRow
                   key={s.id}
-                  onClick={() => setSelectedId(s.id)}
-                  className={cn(
-                    "cursor-pointer",
-                    selectedId === s.id && "bg-muted/50",
-                  )}
+                  className={cn(selectedId === s.id && "bg-muted/50")}
                 >
                   <TableCell>
                     <div className="relative size-8 overflow-hidden rounded-full border bg-muted">
@@ -175,11 +171,20 @@ export function StudentTable({ students, sections }: Props) {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    {s.full_name ?? (
-                      <span className="italic text-muted-foreground">
-                        Unnamed
-                      </span>
-                    )}
+                    {/* Real button gives keyboard users an explicit affordance
+                        to open the side panel; the row no longer carries the
+                        click handler. */}
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(s.id)}
+                      className="text-left hover:underline focus:outline-none focus-visible:underline"
+                    >
+                      {s.full_name ?? (
+                        <span className="italic text-muted-foreground">
+                          Unnamed
+                        </span>
+                      )}
+                    </button>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {s.email}
