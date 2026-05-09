@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server"
 import { createAdminClient } from "@/lib/supabase/admin"
 import { getCurrentUser } from "@/lib/auth/get-user"
 import type { PaymentStatus } from "@/lib/db/student-classes"
+import { inviteUserSchema } from "@/lib/validators/invite-user"
 
 export type EnrollResult = { ok: true } | { error: string }
 export type PaymentResult = { ok: true } | { error: string }
@@ -15,10 +16,6 @@ export type InviteResult = { ok: true; userId: string } | { error: string }
 export type InvitableRole = "student" | "industry_user"
 
 const NOTE_MAX_LENGTH = 5000
-
-// Conservative email check — Supabase will do its own validation; this just
-// catches the obvious typo case before an admin call.
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export async function enrollStudentInSection(
   profileId: string,
@@ -149,23 +146,28 @@ export async function inviteUser(input: {
   fullName: string
   role: InvitableRole
 }): Promise<InviteResult> {
-  const email = input.email.trim().toLowerCase()
-  const fullName = input.fullName.trim()
-  const role = input.role
-
-  if (!EMAIL_RE.test(email)) return { error: "Enter a valid email" }
-  if (fullName.length > 200) {
-    return { error: "Name can’t exceed 200 characters" }
+  const parsed = inviteUserSchema.safeParse(input)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
-  if (role !== "student" && role !== "industry_user") {
-    return { error: "Invalid role" }
-  }
+  const { email, fullName, role } = parsed.data
 
   const me = await getCurrentUser()
   if (!me) return { error: "Not signed in" }
   if (me.role !== "admin") return { error: "Forbidden" }
 
   const admin = createAdminClient()
+
+  // Pre-check email collision before issuing the invite — avoids the orphan
+  // auth.users row we'd otherwise have to clean up on profile-insert failure.
+  const { data: existing, error: existingError } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle()
+  if (existingError) return { error: existingError.message }
+  if (existing) return { error: "A user with that email already exists" }
+
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
 
@@ -191,10 +193,11 @@ export async function inviteUser(input: {
   })
 
   if (profileError) {
-    // Best-effort rollback: don't leave an orphaned auth user. Ignore
-    // delete failures — the auth user can be cleaned up via the admin
-    // dashboard if needed.
-    await admin.auth.admin.deleteUser(userId).catch(() => undefined)
+    // Best-effort rollback: don't leave an orphaned auth user. Log if the
+    // cleanup itself fails so an operator can finish it manually.
+    await admin.auth.admin.deleteUser(userId).catch((rollbackError) => {
+      console.error("invite rollback failed", { userId, error: rollbackError })
+    })
     return { error: `Profile insert failed: ${profileError.message}` }
   }
 

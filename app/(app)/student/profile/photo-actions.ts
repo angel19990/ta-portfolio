@@ -3,6 +3,10 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import {
+  expectedFormatForMime,
+  verifyMagicBytes,
+} from "@/lib/util/file-magic"
 
 export type PhotoActionResult =
   | { ok: true; url?: string }
@@ -30,6 +34,10 @@ export async function addPhoto(
   }
   if (!ALLOWED_MIME.has(file.type)) {
     return { error: "File must be JPEG, PNG, or WebP" }
+  }
+  const format = expectedFormatForMime(file.type)
+  if (!format || !(await verifyMagicBytes(file, format))) {
+    return { error: "File contents don't match its declared type" }
   }
 
   const supabase = await createClient()

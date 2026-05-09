@@ -52,7 +52,6 @@ export async function updateSession(request: NextRequest) {
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
     url.pathname = "/login/student";
-    url.searchParams.set("redirect", pathname);
     return NextResponse.redirect(url);
   }
 

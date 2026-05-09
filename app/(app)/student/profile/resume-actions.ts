@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 
 import { createClient } from "@/lib/supabase/server"
+import { verifyMagicBytes } from "@/lib/util/file-magic"
 
 export type ResumeUploadResult = { ok: true } | { error: string }
 export type ResumeUrlResult = { url: string } | { error: string }
@@ -22,6 +23,9 @@ export async function uploadResume(
   }
   if (file.type !== "application/pdf") {
     return { error: "File must be a PDF" }
+  }
+  if (!(await verifyMagicBytes(file, "pdf"))) {
+    return { error: "File contents don't match its declared type" }
   }
 
   const supabase = await createClient()
