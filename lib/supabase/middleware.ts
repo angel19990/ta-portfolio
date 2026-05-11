@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = [
   "/",
+  "/talent",
   "/login",
   "/auth",
   "/create-password",

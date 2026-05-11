@@ -60,7 +60,7 @@ export default async function StudentApplicationsPage() {
               <li key={a.id}>
                 <Link
                   href={
-                    a.call ? `/student/casting-calls/${a.call.id}` : "#"
+                    a.call ? `/student/casting-calls?call=${a.call.id}` : "#"
                   }
                   className="flex items-center justify-between gap-4 p-4 outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
                   aria-disabled={!a.call}

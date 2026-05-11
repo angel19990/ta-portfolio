@@ -47,7 +47,7 @@ export function PendingApprovalRow({
             alt={fullName ?? email}
             fill
             sizes="64px"
-            className="object-cover"
+            className="object-contain"
           />
         ) : (
           <div className="flex size-full items-center justify-center text-xs text-muted-foreground">

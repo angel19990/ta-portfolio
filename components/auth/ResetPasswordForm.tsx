@@ -52,7 +52,7 @@ export function ResetPasswordForm() {
         </form>
       )}
       <p className="text-center text-sm text-muted-foreground">
-        <Link href="/login/student" className="underline-offset-4 hover:underline">
+        <Link href="/" className="underline-offset-4 hover:underline">
           Back to sign in
         </Link>
       </p>

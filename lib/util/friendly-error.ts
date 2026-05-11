@@ -20,6 +20,9 @@ const CODE_MAP: Record<string, string> = {
   "23514": "That value isn't allowed.",
   "42501": "You don't have permission to do that.",
   PGRST116: "Not found.",
+  over_email_send_rate_limit: "Too many email requests. Wait a minute and try again.",
+  email_not_confirmed: "Confirm your email before signing in.",
+  invalid_credentials: "Invalid email or password.",
 }
 
 const MESSAGE_PATTERNS: { pattern: RegExp; message: string }[] = [
@@ -28,6 +31,7 @@ const MESSAGE_PATTERNS: { pattern: RegExp; message: string }[] = [
   { pattern: /can only be changed by an admin/i, message: "Admins only." },
   { pattern: /id is immutable/i, message: "That field can't be changed." },
   { pattern: /admins only/i, message: "Admins only." },
+  { pattern: /class_sections_section_code/i, message: "A section with that code already exists." },
 ]
 
 export function friendlyError(

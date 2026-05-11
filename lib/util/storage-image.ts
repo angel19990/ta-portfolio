@@ -19,7 +19,7 @@ export function transformedImage(
     url.slice(0, idx) + RENDER_PREFIX + url.slice(idx + RAW_PREFIX.length)
   const sep = transformed.includes("?") ? "&" : "?"
   const quality = opts.quality ?? 80
-  return `${transformed}${sep}width=${opts.width}&quality=${quality}`
+  return `${transformed}${sep}width=${opts.width}&resize=contain&quality=${quality}`
 }
 
 // Extract the storage object path (e.g. "<uid>/headshot-<ts>.jpg") from a

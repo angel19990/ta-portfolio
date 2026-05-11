@@ -29,7 +29,6 @@ export async function approveActor(
   // Approval flips actor visibility on the talent grid + admin views.
   revalidatePath("/admin/approvals")
   revalidatePath("/admin")
-  revalidatePath("/industry/talent")
-  revalidatePath(`/industry/talent/${actorProfileId}`)
+  revalidatePath("/")
   return { ok: true }
 }

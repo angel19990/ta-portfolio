@@ -6,8 +6,8 @@ export async function requireRole(role: AppRole) {
   if (!user) redirect("/login/student");
   if (user.role !== role) {
     const home: Record<AppRole, string> = {
-      student: "/student/profile",
-      industry_user: "/industry/casting-calls",
+      student: "/student/casting-calls",
+      industry_user: "/",
       admin: "/admin",
     };
     redirect(home[user.role]);

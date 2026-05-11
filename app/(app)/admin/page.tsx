@@ -2,14 +2,17 @@ import { requireRole } from "@/lib/auth/require-role";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentTable } from "@/components/admin/StudentTable";
+import { ClassesTable } from "@/components/admin/ClassesTable";
 import { listStudentsForAdmin } from "@/lib/db/students";
 import { listAvailableSections } from "@/lib/db/student-classes";
+import { listClassesForAdmin } from "@/lib/db/classes";
 
 export default async function AdminDashboardPage() {
   await requireRole("admin");
-  const [students, sections] = await Promise.all([
+  const [students, sections, classes] = await Promise.all([
     listStudentsForAdmin(),
     listAvailableSections(),
+    listClassesForAdmin(),
   ]);
 
   return (
@@ -24,9 +27,7 @@ export default async function AdminDashboardPage() {
           <StudentTable students={students} sections={sections} />
         </TabsContent>
         <TabsContent value="classes" className="mt-6">
-          <div className="rounded-lg border p-6 text-sm text-muted-foreground">
-            Classes table lands in Phase 3.
-          </div>
+          <ClassesTable classes={classes} />
         </TabsContent>
       </Tabs>
     </>

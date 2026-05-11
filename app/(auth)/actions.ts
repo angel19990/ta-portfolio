@@ -35,8 +35,8 @@ export async function signIn(
     profile?.role === "admin"
       ? "/admin"
       : profile?.role === "industry_user"
-      ? "/industry/casting-calls"
-      : "/student/profile";
+      ? "/"
+      : "/student/casting-calls";
 
   revalidatePath("/", "layout");
   redirect(home);
@@ -46,7 +46,7 @@ export async function signOut(): Promise<void> {
   const supabase = await createClient();
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
-  redirect("/login/student");
+  redirect("/");
 }
 
 export async function setPasswordFromInvite(
@@ -81,7 +81,7 @@ export async function requestPasswordReset(
   const supabase = await createClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/reset-password`,
+    redirectTo: `${siteUrl}/create-password`,
   });
   if (error) return { error: friendlyError(error) };
 
