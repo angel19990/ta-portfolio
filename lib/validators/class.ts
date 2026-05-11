@@ -2,9 +2,9 @@ import { z } from "zod"
 
 export const classSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
-  code: z.string().trim().max(40).default(""),
-  description: z.string().trim().max(2000).default(""),
-  level: z.string().trim().max(80).default(""),
+  code: z.string().trim().max(40),
+  description: z.string().trim().max(2000),
+  level: z.string().trim().max(80),
   default_price_cents: z
     .number({ error: "Price must be a number" })
     .int()

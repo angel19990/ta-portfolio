@@ -35,11 +35,13 @@ const MESSAGE_PATTERNS: { pattern: RegExp; message: string }[] = [
 ]
 
 export function friendlyError(
-  err: SupabaseLikeError | { message?: string; code?: string },
+  err: unknown,
   fallback = "Something went wrong",
 ): string {
-  const code = "code" in err ? err.code ?? null : null
-  const message = "message" in err ? err.message ?? "" : ""
+  const obj: Record<string, unknown> =
+    err && typeof err === "object" ? (err as Record<string, unknown>) : {}
+  const code = typeof obj.code === "string" ? obj.code : null
+  const message = typeof obj.message === "string" ? obj.message : ""
   if (code && CODE_MAP[code]) return CODE_MAP[code]
   for (const { pattern, message: friendly } of MESSAGE_PATTERNS) {
     if (pattern.test(message)) return friendly

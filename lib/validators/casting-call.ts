@@ -56,7 +56,7 @@ export const castingCallSchema = z
     shoot_end: dateOrEmpty,
     deadline: dateOrEmpty,
     description: z.string().trim().max(5000),
-    attachment_url: z.string().trim().max(1000).default(""),
+    attachment_url: z.string().trim().max(1000),
   })
   .refine(
     (v) => !v.shoot_start || !v.shoot_end || v.shoot_end >= v.shoot_start,

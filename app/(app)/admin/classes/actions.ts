@@ -23,11 +23,13 @@ export type LoadSectionsResult =
 const emptyToNull = (v: string) => (v.trim() === "" ? null : v.trim())
 const dateOrNull = (v: string) => (v === "" ? null : v)
 
-async function requireAdmin() {
+type AdminCheckResult = { ok: true } | { ok: false; error: string }
+
+async function requireAdmin(): Promise<AdminCheckResult> {
   const me = await getCurrentUser()
-  if (!me) return { error: "Not signed in" as const }
-  if (me.role !== "admin") return { error: "Forbidden" as const }
-  return { ok: true as const }
+  if (!me) return { ok: false, error: "Not signed in" }
+  if (me.role !== "admin") return { ok: false, error: "Forbidden" }
+  return { ok: true }
 }
 
 export async function createClass(
@@ -38,7 +40,7 @@ export async function createClass(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
   const auth = await requireAdmin()
-  if ("error" in auth) return { error: auth.error }
+  if (!auth.ok) return { error: auth.error }
 
   const v = parsed.data
   const supabase = await createClient()
@@ -72,7 +74,7 @@ export async function updateClass(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
   const auth = await requireAdmin()
-  if ("error" in auth) return { error: auth.error }
+  if (!auth.ok) return { error: auth.error }
 
   const v = parsed.data
   const supabase = await createClient()
@@ -98,7 +100,7 @@ export async function loadSectionsForClass(
 ): Promise<LoadSectionsResult> {
   if (!classId) return { error: "Missing class id" }
   const auth = await requireAdmin()
-  if ("error" in auth) return { error: auth.error }
+  if (!auth.ok) return { error: auth.error }
 
   const supabase = await createClient()
   const { data, error } = await supabase
@@ -124,7 +126,7 @@ export async function createSection(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
   const auth = await requireAdmin()
-  if ("error" in auth) return { error: auth.error }
+  if (!auth.ok) return { error: auth.error }
 
   const v = parsed.data
   const supabase = await createClient()
@@ -160,7 +162,7 @@ export async function updateSection(
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" }
   }
   const auth = await requireAdmin()
-  if ("error" in auth) return { error: auth.error }
+  if (!auth.ok) return { error: auth.error }
 
   const v = parsed.data
   const supabase = await createClient()

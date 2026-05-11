@@ -5,7 +5,12 @@ import { getOwnCastingCallById } from "@/lib/db/casting-calls"
 import type { CastingCallRow } from "@/lib/db/casting-calls"
 import { PageHeader } from "@/components/layout/PageHeader"
 import { CastingCallForm } from "@/components/industry/CastingCallForm"
-import type { CastingCallInput } from "@/lib/validators/casting-call"
+import {
+  PAY_STATUS_OPTIONS,
+  PROJECT_TYPE_OPTIONS,
+  UNION_STATUS_OPTIONS,
+  type CastingCallInput,
+} from "@/lib/validators/casting-call"
 
 // Reverse of localEndOfDayISO: ISO timestamp → "YYYY-MM-DD" in the server's
 // local TZ. Acceptable for MVP — drift between server and casting director's
@@ -18,18 +23,29 @@ function isoToLocalDateString(iso: string): string {
   return `${y}-${m}-${day}`
 }
 
+// Pre-existing rows may hold values that aren't in the current enum set;
+// fall back to "" so the form renders the placeholder instead of crashing.
+function narrow<T extends string>(
+  value: string | null,
+  options: readonly T[],
+): T | "" {
+  if (!value) return ""
+  return (options as readonly string[]).includes(value) ? (value as T) : ""
+}
+
 function rowToFormValues(row: CastingCallRow): CastingCallInput {
   return {
     title: row.title,
     production_company: row.production_company ?? "",
-    project_type: row.project_type ?? "",
-    union_status: row.union_status ?? "",
-    pay_status: row.pay_status ?? "",
+    project_type: narrow(row.project_type, PROJECT_TYPE_OPTIONS),
+    union_status: narrow(row.union_status, UNION_STATUS_OPTIONS),
+    pay_status: narrow(row.pay_status, PAY_STATUS_OPTIONS),
     location: row.location ?? "",
     shoot_start: row.shoot_start ?? "",
     shoot_end: row.shoot_end ?? "",
     deadline: row.deadline ? isoToLocalDateString(row.deadline) : "",
     description: row.description ?? "",
+    attachment_url: row.attachment_url ?? "",
   }
 }
 
