@@ -1,35 +1,33 @@
-import { requireRole } from "@/lib/auth/require-role";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/auth/get-user";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ActorCard } from "@/components/industry/ActorCard";
-import { SearchBar } from "@/components/industry/SearchBar";
+import { PublicHero } from "@/components/landing/PublicHero";
+import { TalentListingClient } from "@/components/talent/TalentListingClient";
+import { SearchBar } from "@/components/talent/SearchBar";
 
 type SearchParams = Promise<{ q?: string }>;
 
-export default async function IndustryTalentPage({
+export default async function TalentDirectoryPage({
   searchParams,
 }: {
   searchParams: SearchParams;
 }) {
-  await requireRole("industry_user");
   const { q } = await searchParams;
   const query = q?.trim() ?? "";
 
+  const user = await getCurrentUser();
   const supabase = await createClient();
-  // RLS: industry_user only sees rows where visibility='public' AND approved_at IS NOT NULL
-  // (actor_profiles_select_industry_public policy in 0002).
+  // RLS restricts to approved+public actors for all roles (anon included).
+  // See migrations 0002 (authenticated policies) and 0014 (anon policy).
   type Row = {
     id: string;
     headshot_url: string | null;
-    age: number | null;
     location: string | null;
     bio: string | null;
     skills: string[] | null;
     full_name: string | null;
   };
 
-  // PostgREST returns embedded `profiles` as a 1-element array. Normalize to a
-  // flat Row so downstream rendering doesn't need to know about the embed shape.
   type RawRow = Omit<Row, "full_name"> & {
     profiles:
       | { full_name: string | null }
@@ -43,7 +41,6 @@ export default async function IndustryTalentPage({
     return {
       id: raw.id,
       headshot_url: raw.headshot_url,
-      age: raw.age,
       location: raw.location,
       bio: raw.bio,
       skills: raw.skills,
@@ -51,15 +48,17 @@ export default async function IndustryTalentPage({
     };
   }
 
+  // Deliberately omit `email` from the embed. RLS allows reading it
+  // on matched rows, but the public directory should never surface it.
   const baseSelect =
-    "id, headshot_url, age, location, bio, skills, profiles!inner(full_name)";
+    "id, headshot_url, location, bio, skills, profiles!inner(full_name)";
 
-  // For empty queries we list everything RLS allows; for searches we push
-  // matching down to Postgres and union three predicate sets:
+  // Empty query: list everything RLS allows.
+  // Search: push three predicate sets to Postgres in parallel and
+  // dedupe client-side by row id.
   //   1. bio / location ilike
   //   2. skills array contains the query (uses GIN index)
   //   3. profiles.full_name ilike (joined inner)
-  // The de-dup happens client-side via Set on row id.
   let filtered: Row[];
   if (!query) {
     const { data } = await supabase
@@ -104,8 +103,9 @@ export default async function IndustryTalentPage({
 
   return (
     <>
+      {user ? null : <PublicHero />}
       <PageHeader
-        title="Talent"
+        title="Meet Our Talent"
         description="Approved actors from Truthful Acting Studios."
       />
       <div className="space-y-6">
@@ -117,20 +117,7 @@ export default async function IndustryTalentPage({
               : "No approved talent yet"}
           </div>
         ) : (
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((row) => (
-              <li key={row.id}>
-                <ActorCard
-                  id={row.id}
-                  fullName={row.full_name}
-                  age={row.age}
-                  location={row.location}
-                  headshotUrl={row.headshot_url}
-                  skills={row.skills ?? []}
-                />
-              </li>
-            ))}
-          </ul>
+          <TalentListingClient actors={filtered} />
         )}
       </div>
     </>

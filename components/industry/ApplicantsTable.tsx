@@ -20,22 +20,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { APPLICATION_STATUS_VARIANT as APP_STATUS_VARIANT } from "@/lib/ui/status-variants"
 
 const APP_STATUS_LABEL: Record<ApplicationStatus, string> = {
   submitted: "Submitted",
   shortlisted: "Shortlisted",
   rejected: "Rejected",
   withdrawn: "Withdrawn",
-}
-
-const APP_STATUS_VARIANT: Record<
-  ApplicationStatus,
-  "default" | "secondary" | "outline"
-> = {
-  submitted: "default",
-  shortlisted: "default",
-  rejected: "outline",
-  withdrawn: "outline",
 }
 
 function formatDate(iso: string): string {
@@ -97,7 +88,7 @@ export function ApplicantsTable({
                 <div className="flex flex-col">
                   {a.approved && a.actor_profile_id ? (
                     <Link
-                      href={`/industry/talent/${a.actor_profile_id}`}
+                      href={`/?actor=${a.actor_profile_id}`}
                       className="font-medium hover:underline"
                     >
                       {name}

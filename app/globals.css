@@ -9,6 +9,9 @@
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
   --color-brand-foreground: var(--brand-foreground);
+  --color-navbar-bg: var(--navbar-bg);
+  --color-navbar-fg: var(--navbar-fg);
+  --color-navbar-fg-muted: var(--navbar-fg-muted);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-sans);
   --font-heading: var(--font-sans);
@@ -29,6 +32,14 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -57,8 +68,9 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
+  /* Primary button — brand teal with white text. 10.14:1 (WCAG AAA). */
+  --primary: #194558;
+  --primary-foreground: #FFFFFF;
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
@@ -84,9 +96,24 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* Brand accent — single swappable token. Change here when final brand lands. */
-  --brand: oklch(0.205 0 0);
-  --brand-foreground: oklch(0.985 0 0);
+  /* Brand accent — single swappable token. */
+  --brand: #194558;
+  --brand-foreground: #FFFFFF;
+
+  /* Navbar surface. White on #194558 = 10.14:1; #B8C5CB on #194558 ≈ 6.5:1. */
+  --navbar-bg: #194558;
+  --navbar-fg: #FFFFFF;
+  --navbar-fg-muted: #B8C5CB;
+
+  /* Semantic status colors. Soft-tint pattern: bg uses /10, text uses solid. */
+  --success: oklch(0.55 0.15 145);
+  --success-foreground: #FFFFFF;
+  --warning: oklch(0.62 0.16 60);
+  --warning-foreground: #FFFFFF;
+  --info: oklch(0.55 0.16 230);
+  --info-foreground: #FFFFFF;
+  --neutral: oklch(0.85 0 0);
+  --neutral-foreground: oklch(0.35 0 0);
 }
 
 .dark {
@@ -121,6 +148,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Semantic status colors — dark-mode lift for readability. */
+  --success: oklch(0.72 0.16 145);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.78 0.15 60);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.72 0.15 230);
+  --info-foreground: oklch(0.145 0 0);
+  --neutral: oklch(0.35 0 0);
+  --neutral-foreground: oklch(0.85 0 0);
 }
 
 @layer base {

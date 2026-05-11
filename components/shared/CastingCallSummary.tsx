@@ -1,22 +1,10 @@
 import { Badge } from "@/components/ui/badge"
-import type { CastingCallRow, CastingCallStatus } from "@/lib/db/casting-calls"
-
-const STATUS_LABEL: Record<CastingCallStatus, string> = {
-  draft: "Draft",
-  open: "Open",
-  closed: "Closed",
-  archived: "Archived",
-}
-
-const STATUS_VARIANT: Record<
-  CastingCallStatus,
-  "default" | "secondary" | "outline"
-> = {
-  open: "default",
-  draft: "secondary",
-  closed: "outline",
-  archived: "outline",
-}
+import { CastingCallAttachmentViewButton } from "@/components/industry/CastingCallAttachmentViewButton"
+import {
+  CASTING_CALL_STATUS_LABEL as STATUS_LABEL,
+  CASTING_CALL_STATUS_VARIANT as STATUS_VARIANT,
+} from "@/lib/ui/status-variants"
+import type { CastingCallRow } from "@/lib/db/casting-calls"
 
 // Handles both Postgres `date` ("YYYY-MM-DD") and `timestamptz` (ISO).
 // Plain date strings are parsed as local — `new Date("2026-07-10")` would
@@ -85,6 +73,13 @@ export function CastingCallSummary({ call }: { call: CastingCallRow }) {
           <p className="whitespace-pre-wrap text-sm text-muted-foreground">
             {call.description}
           </p>
+        </div>
+      ) : null}
+
+      {call.attachment_url ? (
+        <div>
+          <h2 className="mb-2 text-sm font-medium">Attachment</h2>
+          <CastingCallAttachmentViewButton callId={call.id} />
         </div>
       ) : null}
     </div>

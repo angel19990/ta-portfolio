@@ -22,7 +22,7 @@ export default async function StudentProfilePage() {
     supabase
       .from("actor_profiles")
       .select(
-        "id, age, location, birthplace, bio, skills, reel_url, headshot_url, resume_url, visibility, approved_at",
+        "id, location, ethnicity, bio, skills, current_job, favorite_movies, favorite_series, headshot_url, resume_url, visibility, approved_at",
       )
       .eq("profile_id", user.id)
       .maybeSingle(),
@@ -40,12 +40,13 @@ export default async function StudentProfilePage() {
   const initialValues: TalentProfileInput = actor
     ? {
         full_name: user.fullName ?? "",
-        age: actor.age,
         location: actor.location ?? "",
-        birthplace: actor.birthplace ?? "",
+        ethnicity: actor.ethnicity ?? "",
         bio: actor.bio ?? "",
         skills: actor.skills ?? [],
-        reel_url: actor.reel_url ?? "",
+        current_job: actor.current_job ?? "",
+        favorite_movies: actor.favorite_movies ?? "",
+        favorite_series: actor.favorite_series ?? "",
       }
     : { ...emptyActorProfile(), full_name: user.fullName ?? "" };
 

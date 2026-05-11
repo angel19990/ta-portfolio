@@ -4,7 +4,7 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { getActorResumeSignedUrl } from "@/app/(app)/industry/talent/actions"
+import { getActorResumeSignedUrl } from "@/app/(app)/talent/actions"
 
 type Props = {
   actorProfileId: string

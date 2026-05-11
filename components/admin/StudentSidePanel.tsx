@@ -24,7 +24,6 @@ import {
 import type {
   AdminStudent,
   AdminStudentDetail,
-  StudentStatus,
 } from "@/lib/db/students"
 import type { AvailableSection, EnrollmentRow } from "@/lib/db/student-classes"
 import type { StudentNote } from "@/lib/db/student-notes"
@@ -32,22 +31,10 @@ import { AddClassToStudentDialog } from "@/components/admin/AddClassToStudentDia
 import { RecordPaymentDialog } from "@/components/admin/RecordPaymentDialog"
 import { teacherFromSectionCode } from "@/lib/teachers"
 
-const STATUS_LABEL: Record<StudentStatus, string> = {
-  inactive: "Inactive",
-  pending_approval: "Pending approval",
-  approved: "Approved",
-  private: "Private",
-}
-
-const STATUS_VARIANT: Record<
-  StudentStatus,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  inactive: "destructive",
-  pending_approval: "default",
-  approved: "secondary",
-  private: "outline",
-}
+import {
+  STUDENT_STATUS_LABEL as STATUS_LABEL,
+  STUDENT_STATUS_VARIANT as STATUS_VARIANT,
+} from "@/lib/ui/status-variants"
 
 type Props = {
   student: AdminStudent | null
@@ -147,7 +134,7 @@ export function StudentSidePanel({
                   alt={displayName}
                   fill
                   sizes="56px"
-                  className="object-cover"
+                  className="object-contain"
                 />
               ) : (
                 <div className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
@@ -175,7 +162,6 @@ export function StudentSidePanel({
               <Empty>Student hasn’t filled out their profile yet.</Empty>
             ) : (
               <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-1.5 text-sm">
-                <Row label="Age" value={actor.age?.toString()} />
                 <Row label="Location" value={actor.location} />
                 <Row
                   label="Skills"

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { getCurrentUser, type AppRole } from "@/lib/auth/get-user";
 import { signOut } from "@/app/(auth)/actions";
@@ -13,16 +14,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { MobileNav } from "@/components/layout/MobileNav";
+import taLogo from "@/assets/ta-logo.png";
 
 const ROLE_NAV: Record<AppRole, { label: string; href: string }[]> = {
   student: [
-    { label: "Profile", href: "/student/profile" },
+    { label: "Talent", href: "/" },
     { label: "Casting Calls", href: "/student/casting-calls" },
     { label: "Applications", href: "/student/applications" },
   ],
   industry_user: [
+    { label: "Talent", href: "/" },
     { label: "Casting Calls", href: "/industry/casting-calls" },
-    { label: "Talent", href: "/industry/talent" },
   ],
   admin: [
     { label: "Dashboard", href: "/admin" },
@@ -37,11 +39,16 @@ const ROLE_LABEL: Record<AppRole, string> = {
   admin: "Admin",
 };
 
+// Shared styling for every navbar item so rest / hover / press / focus stay
+// consistent across plain links, external links, and dropdown triggers.
+const NAV_ITEM_CLASS =
+  "rounded-md px-3 py-1.5 text-sm font-medium text-navbar-fg-muted transition-all hover:bg-white/10 hover:text-navbar-fg active:translate-y-px aria-expanded:bg-white/10 aria-expanded:text-navbar-fg outline-none focus-visible:ring-2 focus-visible:ring-white/30";
+
 export async function Navbar() {
   const user = await getCurrentUser();
 
   return (
-    <header className="border-b bg-background">
+    <header className="bg-navbar-bg text-navbar-fg border-b border-white/10">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex items-center gap-2">
           {user ? <MobileNav items={ROLE_NAV[user.role]} /> : null}
@@ -49,56 +56,92 @@ export async function Navbar() {
             href={user ? roleHome(user.role) : "/"}
             className="flex items-center gap-2"
           >
-            <span className="text-base font-semibold tracking-tight">
-              Truthful Acting Studios
-            </span>
+            <Image
+              src={taLogo}
+              alt="Truthful Acting Studios"
+              height={36}
+              width={150}
+              priority
+              className="h-9 w-auto"
+            />
           </Link>
         </div>
 
         {user ? (
           <nav
             aria-label="Primary"
-            className="hidden items-center gap-6 md:flex"
+            className="hidden items-center gap-1 md:flex"
           >
             {ROLE_NAV[user.role].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
+              <Link key={item.href} href={item.href} className={NAV_ITEM_CLASS}>
                 {item.label}
               </Link>
             ))}
+            <a
+              href="https://truthfulacting.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={NAV_ITEM_CLASS}
+            >
+              Our Studio
+            </a>
           </nav>
         ) : (
-          <DropdownMenu>
-            <DropdownMenuTrigger render={<Button variant="ghost" size="sm" />}>
-              Talent Network
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Sign in as</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem render={<Link href="/login/student" />}>
-                Student
-              </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/login/industry" />}>
-                Industry User
-              </DropdownMenuItem>
-              <DropdownMenuItem render={<Link href="/login/admin" />}>
-                Admin
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <nav
+            aria-label="Primary"
+            className="hidden items-center gap-1 md:flex"
+          >
+            <Link href="/" className={NAV_ITEM_CLASS}>
+              Our Talent
+            </Link>
+            <a
+              href="https://truthfulacting.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={NAV_ITEM_CLASS}
+            >
+              Our Studio
+            </a>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button type="button" className={NAV_ITEM_CLASS} />
+                }
+              >
+                Sign In
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel>Sign in as</DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem render={<Link href="/login/student" />}>
+                  Student
+                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/login/industry" />}>
+                  Industry User
+                </DropdownMenuItem>
+                <DropdownMenuItem render={<Link href="/login/admin" />}>
+                  Admin
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </nav>
         )}
 
         {user ? (
           <DropdownMenu>
             <DropdownMenuTrigger
-              render={<Button variant="ghost" className="size-9 p-0" />}
+              render={
+                <Button
+                  variant="ghost"
+                  className="size-9 p-0 text-navbar-fg hover:bg-white/10 hover:text-navbar-fg"
+                />
+              }
               aria-label={`Account: ${user.fullName ?? user.email}`}
             >
               <Avatar className="size-8">
-                <AvatarFallback className="text-xs">
+                <AvatarFallback className="bg-white/15 text-navbar-fg text-xs">
                   {initials(user.fullName ?? user.email)}
                 </AvatarFallback>
               </Avatar>
@@ -115,6 +158,14 @@ export async function Navbar() {
                 </DropdownMenuLabel>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
+              {user.role === "student" ? (
+                <>
+                  <DropdownMenuItem render={<Link href="/student/profile" />}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              ) : null}
               <form action={signOut}>
                 <DropdownMenuItem
                   nativeButton
@@ -138,8 +189,8 @@ function initials(input: string) {
 
 function roleHome(role: AppRole) {
   return role === "student"
-    ? "/student/profile"
+    ? "/student/casting-calls"
     : role === "industry_user"
-      ? "/industry/casting-calls"
+      ? "/"
       : "/admin";
 }

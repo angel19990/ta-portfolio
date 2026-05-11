@@ -8,11 +8,19 @@ import { toast } from "sonner"
 import { saveTalentProfile } from "@/app/(app)/student/profile/actions"
 import {
   actorProfileSchema,
+  ETHNICITY_OPTIONS,
   type TalentProfileInput,
 } from "@/lib/validators/actor-profile"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -74,34 +82,6 @@ export function TalentProfileForm({
 
         <FormField
           control={form.control}
-          name="age"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Age</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={120}
-                  value={field.value ?? ""}
-                  onChange={(e) =>
-                    field.onChange(
-                      e.target.value === "" ? null : Number(e.target.value),
-                    )
-                  }
-                  onBlur={field.onBlur}
-                  ref={field.ref}
-                  name={field.name}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
           name="location"
           render={({ field }) => (
             <FormItem>
@@ -120,13 +100,27 @@ export function TalentProfileForm({
 
         <FormField
           control={form.control}
-          name="birthplace"
+          name="ethnicity"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Birthplace</FormLabel>
-              <FormControl>
-                <Input {...field} value={field.value ?? ""} />
-              </FormControl>
+              <FormLabel>Ethnicity</FormLabel>
+              <Select
+                value={field.value || ""}
+                onValueChange={(v) => field.onChange(v ?? "")}
+              >
+                <FormControl>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select…" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {ETHNICITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>
+                      {opt}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -176,14 +170,49 @@ export function TalentProfileForm({
 
         <FormField
           control={form.control}
-          name="reel_url"
+          name="current_job"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Reel URL</FormLabel>
+              <FormLabel>Current Job</FormLabel>
               <FormControl>
                 <Input
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=..."
+                  placeholder="e.g. Barista at Starbucks"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="favorite_movies"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Favorite Movies</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Comma separated, e.g. La La Land, Inception, Heat"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="favorite_series"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Favorite Series</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Comma separated, e.g. Succession, The Bear, Fleabag"
                   {...field}
                   value={field.value ?? ""}
                 />

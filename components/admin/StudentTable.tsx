@@ -21,22 +21,10 @@ import type { AvailableSection } from "@/lib/db/student-classes"
 import { StudentSidePanel } from "@/components/admin/StudentSidePanel"
 import { InviteUserDialog } from "@/components/admin/InviteUserDialog"
 
-const STATUS_LABEL: Record<StudentStatus, string> = {
-  inactive: "Inactive",
-  pending_approval: "Pending approval",
-  approved: "Approved",
-  private: "Private",
-}
-
-const STATUS_VARIANT: Record<
-  StudentStatus,
-  "default" | "secondary" | "outline" | "destructive"
-> = {
-  inactive: "destructive",
-  pending_approval: "default",
-  approved: "secondary",
-  private: "outline",
-}
+import {
+  STUDENT_STATUS_LABEL as STATUS_LABEL,
+  STUDENT_STATUS_VARIANT as STATUS_VARIANT,
+} from "@/lib/ui/status-variants"
 
 type StatusFilter = "all" | StudentStatus
 
@@ -100,7 +88,6 @@ export function StudentTable({ students, sections }: Props) {
           />
           <Button
             type="button"
-            size="sm"
             onClick={() => setInviteOpen(true)}
           >
             + Invite
@@ -165,7 +152,7 @@ export function StudentTable({ students, sections }: Props) {
                           alt={s.full_name ?? s.email}
                           fill
                           sizes="32px"
-                          className="object-cover"
+                          className="object-contain"
                         />
                       ) : null}
                     </div>

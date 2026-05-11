@@ -37,12 +37,13 @@ export async function saveTalentProfile(
   const { error: actorError } = await supabase.from("actor_profiles").upsert(
     {
       profile_id: user.id,
-      age: v.age,
       location: emptyToNull(v.location),
-      birthplace: emptyToNull(v.birthplace),
+      ethnicity: emptyToNull(v.ethnicity),
       bio: emptyToNull(v.bio),
       skills: v.skills,
-      reel_url: emptyToNull(v.reel_url),
+      current_job: emptyToNull(v.current_job),
+      favorite_movies: emptyToNull(v.favorite_movies),
+      favorite_series: emptyToNull(v.favorite_series),
     },
     { onConflict: "profile_id" },
   )

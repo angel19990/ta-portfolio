@@ -18,7 +18,6 @@ export type AdminStudentActor = {
   bio: string | null
   location: string | null
   skills: string[] | null
-  age: number | null
 }
 
 // List shape — slim, no enrollments/notes (those are lazy-loaded in the side
@@ -129,8 +128,7 @@ export async function listStudentsForAdmin(): Promise<AdminStudent[]> {
           approved_at,
           bio,
           location,
-          skills,
-          age
+          skills
         )
       `,
     )
