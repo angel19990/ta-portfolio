@@ -2,19 +2,23 @@ import Link from "next/link"
 
 import { requireRole } from "@/lib/auth/require-role"
 import { listOpenCastingCalls } from "@/lib/db/casting-calls"
+import { createClient } from "@/lib/supabase/server"
 import { PageHeader } from "@/components/layout/PageHeader"
-
-function formatDeadline(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
-}
+import { StudentCastingCallsListClient } from "@/components/student/StudentCastingCallsListClient"
 
 export default async function StudentCastingCallsPage() {
-  await requireRole("student")
-  const calls = await listOpenCastingCalls()
+  const me = await requireRole("student")
+
+  const supabase = await createClient()
+  const [calls, actorRowResult] = await Promise.all([
+    listOpenCastingCalls(),
+    supabase
+      .from("actor_profiles")
+      .select("id")
+      .eq("profile_id", me.id)
+      .maybeSingle(),
+  ])
+  const hasProfile = actorRowResult.data !== null
 
   return (
     <>
@@ -22,37 +26,29 @@ export default async function StudentCastingCallsPage() {
         title="Casting calls"
         description="Open calls you can apply to."
       />
+
+      {!hasProfile ? (
+        <div className="mb-4 rounded-lg border border-dashed bg-muted/30 p-4 text-sm">
+          <p className="font-medium">Complete your profile to apply.</p>
+          <p className="mt-1 text-muted-foreground">
+            You can browse calls, but you'll need a{" "}
+            <Link
+              href="/student/profile"
+              className="text-foreground underline-offset-4 hover:underline"
+            >
+              talent profile
+            </Link>{" "}
+            before you can submit an application.
+          </p>
+        </div>
+      ) : null}
+
       {calls.length === 0 ? (
         <div className="py-12 text-center text-sm text-muted-foreground">
           No open casting calls right now. Check back later.
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border">
-          {calls.map((c) => (
-            <li key={c.id}>
-              <Link
-                href={`/student/casting-calls/${c.id}`}
-                className="flex items-center justify-between gap-4 p-4 outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <div className="min-w-0">
-                  <span className="block truncate font-medium">
-                    {c.title}
-                  </span>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {[c.production_company, c.project_type, c.location]
-                      .filter(Boolean)
-                      .join(" · ") || "—"}
-                  </p>
-                </div>
-                <div className="shrink-0 text-xs text-muted-foreground">
-                  {c.deadline
-                    ? `Apply by ${formatDeadline(c.deadline)}`
-                    : "No deadline"}
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <StudentCastingCallsListClient calls={calls} />
       )}
     </>
   )

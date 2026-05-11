@@ -8,18 +8,55 @@ const dateOrEmpty = z
   .string()
   .regex(/^(\d{4}-\d{2}-\d{2})?$/, "Use YYYY-MM-DD")
 
+export const PROJECT_TYPE_OPTIONS = [
+  "Feature",
+  "TV",
+  "Commercial",
+  "Theater",
+  "Short",
+  "Other",
+] as const
+
+export const UNION_STATUS_OPTIONS = [
+  "Union",
+  "Non-Union",
+  "Either",
+] as const
+
+export const PAY_STATUS_OPTIONS = [
+  "Paid",
+  "Unpaid",
+  "Stipend",
+  "Deferred",
+] as const
+
+// Empty string is allowed (column is nullable; the action strips empties to null).
+const projectTypeSchema = z.union([
+  z.enum(PROJECT_TYPE_OPTIONS),
+  z.literal(""),
+])
+const unionStatusSchema = z.union([
+  z.enum(UNION_STATUS_OPTIONS),
+  z.literal(""),
+])
+const payStatusSchema = z.union([
+  z.enum(PAY_STATUS_OPTIONS),
+  z.literal(""),
+])
+
 export const castingCallSchema = z
   .object({
     title: z.string().trim().min(1, "Title is required").max(200),
     production_company: z.string().trim().max(200),
-    project_type: z.string().trim().max(80),
-    union_status: z.string().trim().max(80),
-    pay_status: z.string().trim().max(80),
+    project_type: projectTypeSchema,
+    union_status: unionStatusSchema,
+    pay_status: payStatusSchema,
     location: z.string().trim().max(200),
     shoot_start: dateOrEmpty,
     shoot_end: dateOrEmpty,
     deadline: dateOrEmpty,
     description: z.string().trim().max(5000),
+    attachment_url: z.string().trim().max(1000).default(""),
   })
   .refine(
     (v) => !v.shoot_start || !v.shoot_end || v.shoot_end >= v.shoot_start,
@@ -40,5 +77,6 @@ export function emptyCastingCall(): CastingCallInput {
     shoot_end: "",
     deadline: "",
     description: "",
+    attachment_url: "",
   }
 }

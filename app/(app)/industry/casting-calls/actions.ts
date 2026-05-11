@@ -7,6 +7,10 @@ import { createClient } from "@/lib/supabase/server"
 import { friendlyError } from "@/lib/util/friendly-error"
 import type { CastingCallStatus } from "@/lib/db/casting-calls"
 import {
+  listApplicantsForCall,
+  type ApplicantRow,
+} from "@/lib/db/casting-applications"
+import {
   castingCallSchema,
   type CastingCallInput,
 } from "@/lib/validators/casting-call"
@@ -15,6 +19,28 @@ export type CreateResult = { ok: true; id: string } | { error: string }
 export type UpdateResult = { ok: true; id: string } | { error: string }
 export type StatusResult = { ok: true } | { error: string }
 export type ApplicationStatusResult = { ok: true } | { error: string }
+export type ApplicantsResult =
+  | { applicants: ApplicantRow[] }
+  | { error: string }
+
+// Lazy-load applicants for a call when the industry side panel opens.
+// RLS on casting_applications filters to calls owned by the current user.
+export async function loadApplicantsForCall(
+  callId: string,
+): Promise<ApplicantsResult> {
+  if (!callId) return { error: "Missing call id" }
+  const me = await getCurrentUser()
+  if (!me) return { error: "Not signed in" }
+  if (me.role !== "industry_user" && me.role !== "admin") {
+    return { error: "Forbidden" }
+  }
+  try {
+    const applicants = await listApplicantsForCall(callId)
+    return { applicants }
+  } catch (e) {
+    return { error: friendlyError(e) }
+  }
+}
 
 const VALID_APPLICATION_STATUSES = [
   "submitted",
@@ -68,6 +94,7 @@ export async function createCastingCall(
       shoot_end: dateOrNull(v.shoot_end),
       deadline: deadlineISO,
       description: emptyToNull(v.description),
+      attachment_url: emptyToNull(v.attachment_url),
       status,
     })
     .select("id")
@@ -120,6 +147,7 @@ export async function updateCastingCall(
       shoot_end: dateOrNull(v.shoot_end),
       deadline: deadlineISO,
       description: emptyToNull(v.description),
+      attachment_url: emptyToNull(v.attachment_url),
       status,
     })
     .eq("id", id)
@@ -127,12 +155,10 @@ export async function updateCastingCall(
   if (error) return { error: friendlyError(error) }
 
   revalidatePath("/industry/casting-calls")
-  revalidatePath(`/industry/casting-calls/${id}`)
   revalidatePath(`/industry/casting-calls/${id}/edit`)
   // Title / deadline / status changes are visible to students on these
   // routes — invalidate them too so the next render reads fresh data.
   revalidatePath("/student/casting-calls")
-  revalidatePath(`/student/casting-calls/${id}`)
   revalidatePath("/student/applications")
   return { ok: true, id }
 }
@@ -181,7 +207,7 @@ export async function setApplicationStatus(
 
   if (error) return { error: friendlyError(error) }
 
-  revalidatePath(`/industry/casting-calls/${callId}`)
+  revalidatePath("/industry/casting-calls")
   // Student-facing applications page renders this status — keep it in sync.
   revalidatePath("/student/applications")
   return { ok: true }
@@ -209,12 +235,10 @@ export async function setCastingCallStatus(
   if (error) return { error: friendlyError(error) }
 
   revalidatePath("/industry/casting-calls")
-  revalidatePath(`/industry/casting-calls/${id}`)
   // Admin moderation list also displays the call status.
   revalidatePath("/admin/casting-calls")
   // Status changes affect what students see — bust their caches too.
   revalidatePath("/student/casting-calls")
-  revalidatePath(`/student/casting-calls/${id}`)
   revalidatePath("/student/applications")
   return { ok: true }
 }

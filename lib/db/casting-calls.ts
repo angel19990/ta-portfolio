@@ -16,12 +16,13 @@ export type CastingCallRow = {
   deadline: string | null
   location: string | null
   description: string | null
+  attachment_url: string | null
   status: CastingCallStatus
   created_at: string
 }
 
 const CALL_COLUMNS =
-  "id, title, production_company, project_type, union_status, pay_status, shoot_start, shoot_end, deadline, location, description, status, created_at"
+  "id, title, production_company, project_type, union_status, pay_status, shoot_start, shoot_end, deadline, location, description, attachment_url, status, created_at"
 
 // Default page size for list views — bumps to a "load more" UI later if needed.
 const LIST_LIMIT = 50
@@ -99,7 +100,7 @@ export async function listAllCastingCallsForAdmin(): Promise<
       `
         id, title, production_company, project_type, union_status,
         pay_status, shoot_start, shoot_end, deadline, location,
-        description, status, created_at,
+        description, attachment_url, status, created_at,
         owner:created_by ( full_name ),
         casting_applications ( count )
       `,

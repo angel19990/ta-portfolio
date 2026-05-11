@@ -1,14 +1,7 @@
 import { requireRole } from "@/lib/auth/require-role"
 import { listAllCastingCallsForAdmin } from "@/lib/db/casting-calls"
 import { PageHeader } from "@/components/layout/PageHeader"
-import {
-  Table,
-  TableBody,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { AdminCastingCallRow } from "@/components/admin/AdminCastingCallRow"
+import { AdminCastingCallsListClient } from "@/components/admin/AdminCastingCallsListClient"
 
 export default async function AdminCastingCallsPage() {
   await requireRole("admin")
@@ -25,23 +18,7 @@ export default async function AdminCastingCallsPage() {
           No casting calls to review.
         </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Owner</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Applicants</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {calls.map((c) => (
-              <AdminCastingCallRow key={c.id} call={c} />
-            ))}
-          </TableBody>
-        </Table>
+        <AdminCastingCallsListClient calls={calls} />
       )}
     </>
   )

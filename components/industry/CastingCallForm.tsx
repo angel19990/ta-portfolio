@@ -12,11 +12,21 @@ import {
 import type { CastingCallStatus } from "@/lib/db/casting-calls"
 import {
   castingCallSchema,
+  PROJECT_TYPE_OPTIONS,
+  UNION_STATUS_OPTIONS,
+  PAY_STATUS_OPTIONS,
   type CastingCallInput,
 } from "@/lib/validators/casting-call"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -25,6 +35,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form"
+import { CastingCallAttachmentUpload } from "@/components/industry/CastingCallAttachmentUpload"
 
 // "2026-06-01" → end-of-day local time, serialized to ISO. Parses as local
 // (no `Z`/offset), then `.toISOString()` converts to UTC.
@@ -43,13 +54,19 @@ function todayISODate(): string {
 
 const MAX_DATE = "2099-12-31"
 
-type FormProps = { initialValues: CastingCallInput } & (
+type FormProps = {
+  initialValues: CastingCallInput
+  // When provided (modal mode), called after a successful submit with the
+  // new/updated call id. The form does NOT navigate in that case — the
+  // caller decides what to do (close sheet + refresh, etc).
+  onSuccess?: (id: string, status: CastingCallStatus) => void
+} & (
   | { mode: "create" }
   | { mode: "edit"; id: string; currentStatus: CastingCallStatus }
 )
 
 export function CastingCallForm(props: FormProps) {
-  const { initialValues, mode } = props
+  const { initialValues, mode, onSuccess } = props
   const router = useRouter()
   const form = useForm<CastingCallInput>({
     resolver: zodResolver(castingCallSchema),
@@ -83,8 +100,12 @@ export function CastingCallForm(props: FormProps) {
       toast.success(
         nextStatus === "draft" ? "Draft saved" : "Casting call posted",
       )
-      router.push(`/industry/casting-calls/${result.id}`)
-      router.refresh()
+      if (onSuccess) {
+        onSuccess(result.id, nextStatus)
+      } else {
+        router.push("/industry/casting-calls")
+        router.refresh()
+      }
     } else {
       const result = await updateCastingCall(
         props.id,
@@ -101,8 +122,12 @@ export function CastingCallForm(props: FormProps) {
           ? "Casting call posted"
           : "Saved",
       )
-      router.push(`/industry/casting-calls/${props.id}`)
-      router.refresh()
+      if (onSuccess) {
+        onSuccess(props.id, nextStatus)
+      } else {
+        router.push("/industry/casting-calls")
+        router.refresh()
+      }
     }
   }
 
@@ -113,6 +138,7 @@ export function CastingCallForm(props: FormProps) {
   const today = todayISODate()
   // useWatch is compiler-safe (vs form.watch which trips a React Compiler skip).
   const shootStartValue = useWatch({ control: form.control, name: "shoot_start" })
+  const attachmentValue = useWatch({ control: form.control, name: "attachment_url" })
 
   return (
     <Form {...form}>
@@ -166,9 +192,23 @@ export function CastingCallForm(props: FormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Project type</FormLabel>
-                <FormControl>
-                  <Input placeholder="Feature, TV…" {...field} />
-                </FormControl>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v ?? "")}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {PROJECT_TYPE_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -179,9 +219,23 @@ export function CastingCallForm(props: FormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Union status</FormLabel>
-                <FormControl>
-                  <Input placeholder="Union, Non-Union…" {...field} />
-                </FormControl>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v ?? "")}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {UNION_STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -192,9 +246,23 @@ export function CastingCallForm(props: FormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Pay</FormLabel>
-                <FormControl>
-                  <Input placeholder="Paid, Stipend…" {...field} />
-                </FormControl>
+                <Select
+                  value={field.value || ""}
+                  onValueChange={(v) => field.onChange(v ?? "")}
+                >
+                  <FormControl>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select…" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {PAY_STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt} value={opt}>
+                        {opt}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -291,6 +359,13 @@ export function CastingCallForm(props: FormProps) {
               <FormMessage />
             </FormItem>
           )}
+        />
+
+        <CastingCallAttachmentUpload
+          value={attachmentValue ?? ""}
+          onChange={(path) =>
+            form.setValue("attachment_url", path, { shouldDirty: true })
+          }
         />
 
         <div className="flex flex-wrap gap-2">
