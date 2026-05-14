@@ -15,14 +15,16 @@ type Props = {
   actors: TalentRow[]
 }
 
-const SKILL_CHIPS = 10
+const ETHNICITY_CHIPS = 10
 const LOCATION_CHIPS = 8
 
 export function TalentListingClient({ actors }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [selectedSkills, setSelectedSkills] = useState<Set<string>>(new Set())
+  const [selectedEthnicities, setSelectedEthnicities] = useState<Set<string>>(
+    new Set(),
+  )
   const [selectedLocations, setSelectedLocations] = useState<Set<string>>(
     new Set(),
   )
@@ -30,18 +32,18 @@ export function TalentListingClient({ actors }: Props) {
     ? actors.find((a) => a.id === selectedId) ?? null
     : null
 
-  // Aggregate top skills + locations by frequency from the visible roster.
-  const skillChips = useMemo(() => {
+  // Aggregate ethnicities + locations by frequency from the visible roster.
+  const ethnicityChips = useMemo(() => {
     const counts = new Map<string, number>()
     for (const a of actors) {
-      for (const s of a.skills ?? []) {
-        counts.set(s, (counts.get(s) ?? 0) + 1)
-      }
+      const e = a.ethnicity?.trim()
+      if (!e) continue
+      counts.set(e, (counts.get(e) ?? 0) + 1)
     }
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, SKILL_CHIPS)
-      .map(([skill]) => skill)
+      .slice(0, ETHNICITY_CHIPS)
+      .map(([ethnicity]) => ethnicity)
   }, [actors])
 
   const locationChips = useMemo(() => {
@@ -57,14 +59,14 @@ export function TalentListingClient({ actors }: Props) {
       .map(([loc]) => loc)
   }, [actors])
 
-  const activeCount = selectedSkills.size + selectedLocations.size
+  const activeCount = selectedEthnicities.size + selectedLocations.size
 
   const filteredActors = useMemo(() => {
     if (activeCount === 0) return actors
     return actors.filter((a) => {
-      if (selectedSkills.size > 0) {
-        const hit = (a.skills ?? []).some((s) => selectedSkills.has(s))
-        if (!hit) return false
+      if (selectedEthnicities.size > 0) {
+        const e = a.ethnicity?.trim() ?? ""
+        if (!selectedEthnicities.has(e)) return false
       }
       if (selectedLocations.size > 0) {
         const loc = a.location?.trim() ?? ""
@@ -72,7 +74,7 @@ export function TalentListingClient({ actors }: Props) {
       }
       return true
     })
-  }, [actors, selectedSkills, selectedLocations, activeCount])
+  }, [actors, selectedEthnicities, selectedLocations, activeCount])
 
   function toggle<T>(set: Set<T>, value: T): Set<T> {
     const next = new Set(set)
@@ -82,7 +84,7 @@ export function TalentListingClient({ actors }: Props) {
   }
 
   function clearAll() {
-    setSelectedSkills(new Set())
+    setSelectedEthnicities(new Set())
     setSelectedLocations(new Set())
   }
 
@@ -102,9 +104,9 @@ export function TalentListingClient({ actors }: Props) {
 
   return (
     <>
-      <div className="space-y-3 rounded-2xl border bg-muted/30 p-4">
+      <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
             Filters
             {activeCount > 0 ? (
               <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
@@ -135,12 +137,14 @@ export function TalentListingClient({ actors }: Props) {
           />
         ) : null}
 
-        {skillChips.length > 0 ? (
+        {ethnicityChips.length > 0 ? (
           <FilterGroup
-            label="Skills"
-            items={skillChips.map((s) => ({ id: s, label: s }))}
-            isActive={(id) => selectedSkills.has(id)}
-            onToggle={(id) => setSelectedSkills((prev) => toggle(prev, id))}
+            label="Ethnicity"
+            items={ethnicityChips.map((e) => ({ id: e, label: e }))}
+            isActive={(id) => selectedEthnicities.has(id)}
+            onToggle={(id) =>
+              setSelectedEthnicities((prev) => toggle(prev, id))
+            }
           />
         ) : null}
       </div>
@@ -151,7 +155,7 @@ export function TalentListingClient({ actors }: Props) {
           search.
         </div>
       ) : (
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4">
           {filteredActors.map((row) => (
             <li key={row.id}>
               <ActorCard
@@ -192,7 +196,7 @@ function FilterGroup({
 }) {
   return (
     <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3">
-      <p className="min-w-16 pt-1 text-xs font-medium text-muted-foreground">
+      <p className="min-w-16 pt-1 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       <ul className="flex flex-1 flex-wrap gap-1.5">

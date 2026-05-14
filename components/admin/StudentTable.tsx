@@ -116,10 +116,10 @@ export function StudentTable({ students, sections }: Props) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[44px]" />
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Joined</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Name</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Email</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Status</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Joined</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -127,7 +127,7 @@ export function StudentTable({ students, sections }: Props) {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="py-10 text-center text-sm text-muted-foreground"
+                  className="py-12 text-center text-sm text-muted-foreground"
                 >
                   {students.length === 0
                     ? "No students yet. Invite one to get started."
@@ -141,7 +141,7 @@ export function StudentTable({ students, sections }: Props) {
                   className={cn(selectedId === s.id && "bg-muted/50")}
                 >
                   <TableCell>
-                    <div className="relative size-8 overflow-hidden rounded-full border bg-muted">
+                    <div className="relative size-8 overflow-hidden rounded-full bg-muted">
                       {s.actor_profile?.headshot_url ? (
                         <Image
                           src={

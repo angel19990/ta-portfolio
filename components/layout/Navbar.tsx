@@ -44,6 +44,17 @@ const ROLE_LABEL: Record<AppRole, string> = {
 const NAV_ITEM_CLASS =
   "rounded-md px-3 py-1.5 text-sm font-medium text-navbar-fg-muted transition-all hover:bg-white/10 hover:text-navbar-fg active:translate-y-px aria-expanded:bg-white/10 aria-expanded:text-navbar-fg outline-none focus-visible:ring-2 focus-visible:ring-white/30";
 
+const PUBLIC_NAV: { label: string; href: string; external?: boolean }[] = [
+  { label: "Our Talent", href: "/" },
+  { label: "Our Studio", href: "https://truthfulacting.com", external: true },
+];
+
+const PUBLIC_SIGNIN: { label: string; href: string }[] = [
+  { label: "Student", href: "/login/student" },
+  { label: "Industry User", href: "/login/industry" },
+  { label: "Admin", href: "/login/admin" },
+];
+
 export async function Navbar() {
   const user = await getCurrentUser();
 
@@ -51,7 +62,11 @@ export async function Navbar() {
     <header className="bg-navbar-bg text-navbar-fg border-b border-white/10">
       <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex items-center gap-2">
-          {user ? <MobileNav items={ROLE_NAV[user.role]} /> : null}
+          {user ? (
+            <MobileNav items={ROLE_NAV[user.role]} />
+          ) : (
+            <MobileNav items={PUBLIC_NAV} signInOptions={PUBLIC_SIGNIN} />
+          )}
           <Link
             href={user ? roleHome(user.role) : "/"}
             className="flex items-center gap-2"

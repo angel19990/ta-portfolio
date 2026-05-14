@@ -97,15 +97,11 @@ export function ResumeUpload({ hasResume }: Props) {
 
   return (
     <>
-      <div className="space-y-3 rounded-lg border p-4">
+      <section className="space-y-3 border-t border-foreground/10 pt-6">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Resume</p>
-            <p className="text-xs text-muted-foreground">
-              PDF only. 10 MB max. {hasResume ? "Currently on file." : "No file uploaded."}
-              {" "}Pick a file to preview before uploading.
-            </p>
-          </div>
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Resume
+          </h2>
           {hasResume ? (
             <Button
               type="button"
@@ -118,6 +114,10 @@ export function ResumeUpload({ hasResume }: Props) {
             </Button>
           ) : null}
         </div>
+        <p className="text-xs text-muted-foreground">
+          PDF only. 10 MB max. {hasResume ? "Currently on file." : "No file uploaded."}
+          {" "}Pick a file to preview before uploading.
+        </p>
         <input
           ref={inputRef}
           type="file"
@@ -125,7 +125,7 @@ export function ResumeUpload({ hasResume }: Props) {
           onChange={onPick}
           className="block w-full max-w-sm text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
         />
-      </div>
+      </section>
 
       <Dialog
         open={previewOpen}

@@ -31,7 +31,7 @@ export function CastingCallSummary({ call }: { call: CastingCallRow }) {
         : null
 
   return (
-    <div className="grid gap-6">
+    <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center gap-2">
         <Badge variant={STATUS_VARIANT[call.status]}>
           {STATUS_LABEL[call.status]}
@@ -44,33 +44,42 @@ export function CastingCallSummary({ call }: { call: CastingCallRow }) {
         ) : null}
       </div>
 
-      <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+      <dl className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
         {call.location ? (
           <div>
-            <dt className="text-xs text-muted-foreground">Location</dt>
-            <dd className="text-sm">{call.location}</dd>
+            <dt className="sr-only">Location</dt>
+            <dd>
+              <span className="text-muted-foreground">Location</span>
+              <span className="ml-1.5">{call.location}</span>
+            </dd>
           </div>
         ) : null}
         {shootDates ? (
           <div>
-            <dt className="text-xs text-muted-foreground">Shoot</dt>
-            <dd className="text-sm">{shootDates}</dd>
+            <dt className="sr-only">Shoot</dt>
+            <dd>
+              <span className="text-muted-foreground">Shoot</span>
+              <span className="ml-1.5">{shootDates}</span>
+            </dd>
           </div>
         ) : null}
         {call.deadline ? (
           <div>
-            <dt className="text-xs text-muted-foreground">
-              Application deadline
-            </dt>
-            <dd className="text-sm">{formatDate(call.deadline)}</dd>
+            <dt className="sr-only">Apply by</dt>
+            <dd>
+              <span className="text-muted-foreground">Apply by</span>
+              <span className="ml-1.5">{formatDate(call.deadline)}</span>
+            </dd>
           </div>
         ) : null}
       </dl>
 
       {call.description ? (
         <div>
-          <h2 className="mb-2 text-sm font-medium">Description</h2>
-          <p className="whitespace-pre-wrap text-sm text-muted-foreground">
+          <h2 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Description
+          </h2>
+          <p className="whitespace-pre-wrap text-sm text-foreground/90">
             {call.description}
           </p>
         </div>
@@ -78,7 +87,9 @@ export function CastingCallSummary({ call }: { call: CastingCallRow }) {
 
       {call.attachment_url ? (
         <div>
-          <h2 className="mb-2 text-sm font-medium">Attachment</h2>
+          <h2 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Attachment
+          </h2>
           <CastingCallAttachmentViewButton callId={call.id} />
         </div>
       ) : null}

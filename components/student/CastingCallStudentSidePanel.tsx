@@ -104,14 +104,14 @@ export function CastingCallStudentSidePanel({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-xl">
         <SheetHeader className="border-b">
-          <SheetTitle className="truncate">{call.title}</SheetTitle>
+          <SheetTitle className="truncate text-xl font-semibold tracking-tight">{call.title}</SheetTitle>
           <SheetDescription className="truncate">{subline}</SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col gap-5 px-4 pb-4">
+        <div className="flex flex-col gap-6 px-4 pb-6 pt-4">
           <CastingCallSummary call={call} />
 
-          <section className="rounded-lg border p-4">
+          <section className="border-t border-foreground/10 pt-5">
             {contextLoading && !visibleContext ? (
               <Skeleton className="h-9 w-44" />
             ) : !visibleContext ? null : application ? (

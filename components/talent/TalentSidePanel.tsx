@@ -25,6 +25,7 @@ export type TalentRow = {
   location: string | null
   bio: string | null
   skills: string[] | null
+  ethnicity: string | null
   headshot_url: string | null
 }
 
@@ -91,14 +92,14 @@ export function TalentSidePanel({ actor, open, onOpenChange }: Props) {
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="border-b">
-          <SheetTitle className="truncate">{displayName}</SheetTitle>
+          <SheetTitle className="truncate text-xl font-semibold tracking-tight">{displayName}</SheetTitle>
           <SheetDescription className="truncate">
             {subline || "—"}
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex flex-col gap-5 px-4 pb-4">
-          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg border bg-muted">
+        <div className="flex flex-col gap-6 px-4 pb-6 pt-4">
+          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-lg bg-muted">
             {actor.headshot_url ? (
               <Image
                 src={transformedImage(actor.headshot_url, { width: 600 })!}
@@ -121,7 +122,7 @@ export function TalentSidePanel({ actor, open, onOpenChange }: Props) {
           ) : null}
 
           <Section title="Details">
-            <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-1.5 text-sm">
+            <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-sm">
               <Row label="Location" value={actor.location} />
               <Row
                 label="Ethnicity"
@@ -180,7 +181,7 @@ export function TalentSidePanel({ actor, open, onOpenChange }: Props) {
                 {visibleDetail.photos.map((p, i) => (
                   <li
                     key={p.id}
-                    className="relative aspect-square overflow-hidden rounded-md border bg-muted"
+                    className="relative aspect-square overflow-hidden rounded-md bg-muted"
                   >
                     <Image
                       src={transformedImage(p.url, { width: 400 })!}
@@ -214,8 +215,8 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section>
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <section className="border-t border-foreground/10 pt-5 first-of-type:border-0 first-of-type:pt-0">
+      <h3 className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
         {title}
       </h3>
       {children}
@@ -245,10 +246,6 @@ function Row({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-      {children}
-    </p>
-  )
+  return <p className="text-sm text-muted-foreground">{children}</p>
 }
 

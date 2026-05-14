@@ -13,7 +13,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <main
         id="main"
         tabIndex={-1}
-        className="mx-auto w-full max-w-[1200px] flex-1 px-6 py-8 focus:outline-none"
+        className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-6 sm:px-6 sm:py-10 focus:outline-none"
       >
         {children}
       </main>

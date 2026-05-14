@@ -112,7 +112,7 @@ export function AdminCastingCallSidePanel({ call, open, onOpenChange }: Props) {
         <SheetHeader className="border-b">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <SheetTitle className="truncate">{call.title}</SheetTitle>
+              <SheetTitle className="truncate text-xl font-semibold tracking-tight">{call.title}</SheetTitle>
               <SheetDescription className="truncate">
                 {call.production_company ?? "—"}
                 {call.owner_full_name
@@ -128,11 +128,11 @@ export function AdminCastingCallSidePanel({ call, open, onOpenChange }: Props) {
           </div>
         </SheetHeader>
 
-        <div className="flex flex-col gap-5 px-4 pb-4">
+        <div className="flex flex-col gap-6 px-4 pb-6 pt-4">
           <CastingCallSummary call={call} />
 
           {call.status !== "archived" ? (
-            <section className="flex flex-wrap items-center gap-2 rounded-lg border p-4">
+            <section className="flex flex-wrap items-center gap-2 border-t border-foreground/10 pt-5">
               <Button
                 type="button"
                 size="sm"
@@ -147,10 +147,10 @@ export function AdminCastingCallSidePanel({ call, open, onOpenChange }: Props) {
             </section>
           ) : null}
 
-          <section>
-            <h2 className="mb-2 text-sm font-medium">
-              Applicants{" "}
-              <span className="ml-1 text-xs text-muted-foreground">
+          <section className="border-t border-foreground/10 pt-5">
+            <h2 className="mb-3 flex items-baseline gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+              Applicants
+              <span className="text-muted-foreground/70">
                 ({call.applicant_count})
               </span>
             </h2>

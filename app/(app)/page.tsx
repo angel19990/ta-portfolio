@@ -25,6 +25,7 @@ export default async function TalentDirectoryPage({
     location: string | null;
     bio: string | null;
     skills: string[] | null;
+    ethnicity: string | null;
     full_name: string | null;
   };
 
@@ -44,6 +45,7 @@ export default async function TalentDirectoryPage({
       location: raw.location,
       bio: raw.bio,
       skills: raw.skills,
+      ethnicity: raw.ethnicity,
       full_name: name,
     };
   }
@@ -51,7 +53,7 @@ export default async function TalentDirectoryPage({
   // Deliberately omit `email` from the embed. RLS allows reading it
   // on matched rows, but the public directory should never surface it.
   const baseSelect =
-    "id, headshot_url, location, bio, skills, profiles!inner(full_name)";
+    "id, headshot_url, location, bio, skills, ethnicity, profiles!inner(full_name)";
 
   // Empty query: list everything RLS allows.
   // Search: push three predicate sets to Postgres in parallel and

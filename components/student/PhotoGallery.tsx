@@ -91,25 +91,25 @@ export function PhotoGallery({ photos }: Props) {
 
   return (
     <>
-      <div className="space-y-3 rounded-lg border p-4">
+      <section className="space-y-3 border-t border-foreground/10 pt-6">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium">Photo gallery</p>
-            <p className="text-xs text-muted-foreground">
-              Up to {PHOTO_LIMIT} photos. JPEG, PNG, or WebP. 5 MB each. Pick a file to open the cropper.
-            </p>
-          </div>
+          <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Photo gallery
+          </h2>
           <p className="text-xs text-muted-foreground">
             {photos.length} / {PHOTO_LIMIT}
           </p>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Up to {PHOTO_LIMIT} photos. JPEG, PNG, or WebP. 5 MB each. Pick a file to open the cropper.
+        </p>
 
         {photos.length > 0 ? (
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6">
             {photos.map((p, i) => (
               <li
                 key={p.id}
-                className="group relative aspect-[2/3] overflow-hidden rounded-md border bg-muted"
+                className="group relative aspect-[2/3] overflow-hidden rounded-md bg-muted"
               >
                 <Image
                   src={transformedImage(p.url, { width: 400 })!}
@@ -144,7 +144,7 @@ export function PhotoGallery({ photos }: Props) {
             You&apos;ve reached the {PHOTO_LIMIT}-photo limit. Remove one to add another.
           </p>
         ) : null}
-      </div>
+      </section>
 
       <ImageCropper
         open={cropperOpen}

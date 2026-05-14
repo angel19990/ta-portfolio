@@ -69,38 +69,40 @@ export function HeadshotUpload({ currentUrl }: Props) {
 
   return (
     <>
-      <div className="flex items-start gap-4 rounded-lg border p-4">
-        <div className="relative size-24 shrink-0 overflow-hidden rounded-md border bg-muted">
-          {currentUrl ? (
-            <Image
-              src={currentUrl}
-              alt="Headshot"
-              fill
-              sizes="96px"
-              className="object-contain"
-            />
-          ) : (
-            <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
-              No headshot
-            </div>
-          )}
-        </div>
-        <div className="flex-1 space-y-2">
-          <div>
-            <p className="text-sm font-medium">Headshot</p>
+      <section className="border-t border-foreground/10 pt-6">
+        <h2 className="mb-3 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          Headshot
+        </h2>
+        <div className="flex items-start gap-4">
+          <div className="relative size-24 shrink-0 overflow-hidden rounded-md bg-muted">
+            {currentUrl ? (
+              <Image
+                src={currentUrl}
+                alt="Headshot"
+                fill
+                sizes="96px"
+                className="object-contain"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center text-xs text-muted-foreground">
+                No headshot
+              </div>
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
             <p className="text-xs text-muted-foreground">
               JPEG, PNG, or WebP. 5 MB max. Pick a file to open the cropper.
             </p>
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={onPick}
+              className="block w-full max-w-sm text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
+            />
           </div>
-          <input
-            ref={inputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={onPick}
-            className="block w-full max-w-sm text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground hover:file:bg-secondary/80"
-          />
         </div>
-      </div>
+      </section>
 
       <ImageCropper
         open={cropperOpen}

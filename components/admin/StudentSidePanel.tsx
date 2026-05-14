@@ -127,13 +127,13 @@ export function StudentSidePanel({
       <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
         <SheetHeader className="border-b">
           <div className="flex items-start gap-3">
-            <div className="relative size-14 shrink-0 overflow-hidden rounded-md border bg-muted">
+            <div className="relative size-12 shrink-0 overflow-hidden rounded-md bg-muted">
               {actor?.headshot_url ? (
                 <Image
                   src={transformedImage(actor.headshot_url, { width: 120 })!}
                   alt={displayName}
                   fill
-                  sizes="56px"
+                  sizes="48px"
                   className="object-contain"
                 />
               ) : (
@@ -143,7 +143,7 @@ export function StudentSidePanel({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <SheetTitle className="truncate">{displayName}</SheetTitle>
+              <SheetTitle className="truncate text-lg font-semibold tracking-tight">{displayName}</SheetTitle>
               <SheetDescription className="truncate">
                 {student.email}
               </SheetDescription>
@@ -156,12 +156,12 @@ export function StudentSidePanel({
           </div>
         </SheetHeader>
 
-        <div className="flex flex-col gap-5 px-4 pb-4">
+        <div className="flex flex-col gap-6 px-4 pb-6 pt-4">
           <Section title="Profile">
             {!actor ? (
               <Empty>Student hasn’t filled out their profile yet.</Empty>
             ) : (
-              <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-1.5 text-sm">
+              <dl className="grid grid-cols-[120px_1fr] gap-x-3 gap-y-2 text-sm">
                 <Row label="Location" value={actor.location} />
                 <Row
                   label="Skills"
@@ -206,7 +206,7 @@ export function StudentSidePanel({
             ) : enrollments.length === 0 ? (
               <Empty>Not enrolled in any classes yet.</Empty>
             ) : (
-              <ul className="space-y-2">
+              <ul>
                 {enrollments.map((e) => (
                   <EnrollmentItem
                     key={e.id}
@@ -279,7 +279,7 @@ function EnrollmentItem({
   const teacher = section ? teacherFromSectionCode(section.section_code) : null
   const isPaid = enrollment.outstanding_cents <= 0
   return (
-    <li className="rounded-md border p-3">
+    <li className="border-t border-foreground/10 pt-3 pb-3 first:border-0 first:pt-0">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{className}</p>
@@ -293,7 +293,7 @@ function EnrollmentItem({
           {enrollment.status}
         </Badge>
       </div>
-      <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+      <div className="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>Payment: {enrollment.payment_status}</span>
         <span>
           {isPaid
@@ -302,7 +302,7 @@ function EnrollmentItem({
         </span>
       </div>
       {!isPaid ? (
-        <div className="mt-2 flex justify-end">
+        <div className="mt-1.5 flex justify-end">
           <Button
             type="button"
             size="sm"
@@ -348,13 +348,14 @@ function NotesThread({
   return (
     <div className="space-y-3">
       {notes.length === 0 ? (
-        <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-          No notes yet.
-        </p>
+        <p className="text-sm text-muted-foreground">No notes yet.</p>
       ) : (
-        <ul className="space-y-2">
+        <ul>
           {notes.map((n) => (
-            <li key={n.id} className="rounded-md border p-3">
+            <li
+              key={n.id}
+              className="border-t border-foreground/10 pt-3 pb-3 first:border-0 first:pt-0"
+            >
               <p className="whitespace-pre-wrap break-words text-sm">
                 {n.body}
               </p>
@@ -420,9 +421,9 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section>
+    <section className="border-t border-foreground/10 pt-5 first-of-type:border-0 first-of-type:pt-0">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <h3 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           {title}
         </h3>
         {action}
@@ -462,11 +463,7 @@ function Row({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="rounded-md border border-dashed p-3 text-sm text-muted-foreground">
-      {children}
-    </p>
-  )
+  return <p className="text-sm text-muted-foreground">{children}</p>
 }
 
 function DetailSkeleton({ rows = 2 }: { rows?: number }) {

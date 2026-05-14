@@ -39,8 +39,8 @@ export function PendingApprovalRow({
   }
 
   return (
-    <li className="flex items-start gap-4 rounded-lg border p-4">
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-md border bg-muted">
+    <li className="flex items-start gap-4 border-t border-foreground/10 pt-4 pb-4 first:border-0 first:pt-0">
+      <div className="relative size-16 shrink-0 overflow-hidden rounded-md bg-muted">
         {headshotUrl ? (
           <Image
             src={transformedImage(headshotUrl, { width: 160 })!}

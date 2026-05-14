@@ -64,165 +64,186 @@ export function TalentProfileForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="grid max-w-2xl gap-6"
+        className="flex flex-col max-w-xl gap-8"
       >
-        <FormField
-          control={form.control}
-          name="full_name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input autoComplete="name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <section className="border-t border-foreground/10 pt-6">
+          <h2 className="mb-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Basic info
+          </h2>
+          <div className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="full_name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input autoComplete="name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Location</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Orlando, FL"
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. Orlando, FL"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
 
-        <FormField
-          control={form.control}
-          name="ethnicity"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Ethnicity</FormLabel>
-              <Select
-                value={field.value || ""}
-                onValueChange={(v) => field.onChange(v ?? "")}
-              >
-                <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select…" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {ETHNICITY_OPTIONS.map((opt) => (
-                    <SelectItem key={opt} value={opt}>
-                      {opt}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <section className="border-t border-foreground/10 pt-6">
+          <h2 className="mb-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Background
+          </h2>
+          <div className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={6}
+                      placeholder="Short bio for casting professionals."
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="bio"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Bio</FormLabel>
-              <FormControl>
-                <Textarea
-                  rows={6}
-                  placeholder="Short bio for casting professionals."
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="ethnicity"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Ethnicity</FormLabel>
+                  <Select
+                    value={field.value || ""}
+                    onValueChange={(v) => field.onChange(v ?? "")}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select…" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {ETHNICITY_OPTIONS.map((opt) => (
+                        <SelectItem key={opt} value={opt}>
+                          {opt}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="skills"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Skills</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="comma-separated, e.g. Improv, Stage Combat, Spanish"
-                  value={skillsInput}
-                  onChange={(e) => {
-                    setSkillsInput(e.target.value)
-                    field.onChange(stringToSkills(e.target.value))
-                  }}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="current_job"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Current Job</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="e.g. Barista at Starbucks"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
 
-        <FormField
-          control={form.control}
-          name="current_job"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Current Job</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="e.g. Barista at Starbucks"
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <section className="border-t border-foreground/10 pt-6">
+          <h2 className="mb-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            Preferences
+          </h2>
+          <div className="flex flex-col gap-4">
+            <FormField
+              control={form.control}
+              name="skills"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Skills</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="comma-separated, e.g. Improv, Stage Combat, Spanish"
+                      value={skillsInput}
+                      onChange={(e) => {
+                        setSkillsInput(e.target.value)
+                        field.onChange(stringToSkills(e.target.value))
+                      }}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="favorite_movies"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Favorite Movies</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Comma separated, e.g. La La Land, Inception, Heat"
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="favorite_movies"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Favorite Movies</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Comma separated, e.g. La La Land, Inception, Heat"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-        <FormField
-          control={form.control}
-          name="favorite_series"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Favorite Series</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Comma separated, e.g. Succession, The Bear, Fleabag"
-                  {...field}
-                  value={field.value ?? ""}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <FormField
+              control={form.control}
+              name="favorite_series"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Favorite Series</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Comma separated, e.g. Succession, The Bear, Fleabag"
+                      {...field}
+                      value={field.value ?? ""}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </section>
 
-        <div>
+        <div className="border-t border-foreground/10 pt-6">
           <Button type="submit" disabled={form.formState.isSubmitting}>
             {form.formState.isSubmitting ? "Saving…" : "Save profile"}
           </Button>

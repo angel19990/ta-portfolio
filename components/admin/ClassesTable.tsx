@@ -46,12 +46,12 @@ export function ClassesTable({ classes }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Level</TableHead>
-              <TableHead className="text-right">Default price</TableHead>
-              <TableHead className="text-right">Sections</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Name</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Code</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Level</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Default price</TableHead>
+              <TableHead className="text-right text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Sections</TableHead>
+              <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -59,7 +59,7 @@ export function ClassesTable({ classes }: Props) {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="py-10 text-center text-sm text-muted-foreground"
+                  className="py-12 text-center text-sm text-muted-foreground"
                 >
                   No classes yet. Create your first one.
                 </TableCell>

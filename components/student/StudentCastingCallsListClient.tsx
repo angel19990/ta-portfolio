@@ -42,17 +42,17 @@ export function StudentCastingCallsListClient({ calls }: Props) {
 
   return (
     <>
-      <ul className="divide-y rounded-lg border">
+      <ul className="divide-y border-t border-b border-foreground/10">
         {calls.map((c) => (
           <li key={c.id}>
             <button
               type="button"
               onClick={() => setSelectedId(c.id)}
-              className="flex w-full items-center justify-between gap-4 p-4 text-left outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
+              className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left outline-none hover:bg-muted/40 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
             >
               <div className="min-w-0">
                 <span className="block truncate font-medium">{c.title}</span>
-                <p className="mt-0.5 text-xs text-muted-foreground">
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">
                   {[c.production_company, c.project_type, c.location]
                     .filter(Boolean)
                     .join(" · ") || "—"}

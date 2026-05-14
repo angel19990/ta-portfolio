@@ -73,10 +73,10 @@ export function ApplicantsTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Applicant</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Applied</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Applicant</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Status</TableHead>
+          <TableHead className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Applied</TableHead>
+          <TableHead className="text-right text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -85,23 +85,21 @@ export function ApplicantsTable({
           return (
             <TableRow key={a.application_id}>
               <TableCell>
-                <div className="flex flex-col">
-                  {a.approved && a.actor_profile_id ? (
-                    <Link
-                      href={`/?actor=${a.actor_profile_id}`}
-                      className="font-medium hover:underline"
-                    >
-                      {name}
-                    </Link>
-                  ) : (
-                    <span className="font-medium">{name}</span>
-                  )}
-                  {a.location ? (
-                    <span className="text-xs text-muted-foreground">
-                      {a.location}
-                    </span>
-                  ) : null}
-                </div>
+                {a.approved && a.actor_profile_id ? (
+                  <Link
+                    href={`/?actor=${a.actor_profile_id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {name}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{name}</span>
+                )}
+                {a.location ? (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {a.location}
+                  </span>
+                ) : null}
               </TableCell>
               <TableCell>
                 <Badge
@@ -121,12 +119,13 @@ export function ApplicantsTable({
                 {formatDate(a.applied_at)}
               </TableCell>
               <TableCell className="text-right">
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-1">
                   {a.status === "submitted" ? (
                     <>
                       <Button
                         type="button"
                         size="sm"
+                        variant="ghost"
                         disabled={pending}
                         onClick={() =>
                           transition(
@@ -141,7 +140,7 @@ export function ApplicantsTable({
                       <Button
                         type="button"
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         disabled={pending}
                         onClick={() =>
                           transition(
@@ -159,7 +158,7 @@ export function ApplicantsTable({
                     <Button
                       type="button"
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       disabled={pending}
                       onClick={() =>
                         transition(a.application_id, "rejected", "Rejected")
@@ -172,7 +171,7 @@ export function ApplicantsTable({
                     <Button
                       type="button"
                       size="sm"
-                      variant="outline"
+                      variant="ghost"
                       disabled={pending}
                       onClick={() =>
                         transition(

@@ -122,13 +122,13 @@ export function CastingCallsListClient({ calls }: Props) {
           No casting calls yet. Create your first one.
         </div>
       ) : (
-        <ul className="divide-y rounded-lg border">
+        <ul className="divide-y border-t border-b border-foreground/10">
           {calls.map((c) => (
             <li key={c.id}>
               <button
                 type="button"
                 onClick={() => setSelectedId(c.id)}
-                className="flex w-full items-center justify-between gap-4 p-4 text-left outline-none hover:bg-muted/50 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
+                className="flex w-full items-center justify-between gap-4 px-4 py-3 text-left outline-none hover:bg-muted/40 focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring/50"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export function CastingCallsListClient({ calls }: Props) {
                       {STATUS_LABEL[c.status]}
                     </Badge>
                   </div>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {[c.project_type, c.location].filter(Boolean).join(" · ") ||
                       "—"}
                   </p>
@@ -184,17 +184,17 @@ export function CastingCallsListClient({ calls }: Props) {
           {selected ? (
             <>
               <SheetHeader className="border-b">
-                <SheetTitle className="truncate">{selected.title}</SheetTitle>
+                <SheetTitle className="truncate text-xl font-semibold tracking-tight">{selected.title}</SheetTitle>
                 <SheetDescription className="truncate">
                   {[selected.production_company, selected.project_type]
                     .filter(Boolean)
                     .join(" · ") || "—"}
                 </SheetDescription>
               </SheetHeader>
-              <div className="flex flex-col gap-5 px-4 pb-4">
+              <div className="flex flex-col gap-6 px-4 pb-6 pt-4">
                 <CastingCallSummary call={selected} />
 
-                <section className="flex flex-wrap items-center gap-2 rounded-lg border p-4">
+                <section className="flex flex-wrap items-center gap-2">
                   <Button
                     nativeButton={false}
                     variant="outline"
@@ -213,11 +213,11 @@ export function CastingCallsListClient({ calls }: Props) {
                   />
                 </section>
 
-                <section>
-                  <h2 className="mb-2 text-sm font-medium">
-                    Applicants{" "}
+                <section className="border-t border-foreground/10 pt-5">
+                  <h2 className="mb-3 flex items-baseline gap-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    Applicants
                     {visibleApplicants ? (
-                      <span className="ml-1 text-xs text-muted-foreground">
+                      <span className="text-muted-foreground/70">
                         ({visibleApplicants.length})
                       </span>
                     ) : null}
